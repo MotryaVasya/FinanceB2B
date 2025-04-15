@@ -1,5 +1,5 @@
 from aiogram import types, F
-from app.bot.bot import dp
+from project.bot.bot import dp
 
 @dp.message(F.text == "/start")
 async def start_handler(message: types.Message):
