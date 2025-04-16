@@ -9,4 +9,5 @@ async def main():
     dp.include_router(router)
     
     await dp.start_polling(bot)
+    print("bot started...")
 asyncio.run(main())

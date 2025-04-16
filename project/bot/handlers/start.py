@@ -1,8 +1,7 @@
 from aiogram import Router, types, F
 from aiogram.filters import CommandStart
 from aiogram.exceptions import AiogramError
-from ..keyboards.reply import start_keyboard,base_key,get_categories_keyboard
-#from ..keyboards.reply import get_categories_keyboard
+from project.bot.keyboards.reply import start_keyboard, base_key, get_categories_keyboard, get_transaction_keyboard
 router=Router()
 
 @router.message(CommandStart())
@@ -25,15 +24,28 @@ async def button1_click(message: types.Message):
         reply_markup=base_key()  # Меняем клавиатуру
         )
     except AiogramError as e:
-        print(f"Ошиька телеграм {e}")
+        print(f"Ошибка телеграм {e}")
     except Exception as e:
         print(f"нежданчик {e}")
+
 @router.message(F.text == "Категории")
 async def categories_handler(message: types.Message):
     try:
         await message.answer(
             "Выберите действие:",
             reply_markup=get_categories_keyboard()
+        )
+    except AiogramError as e:
+        print(f"⚠ Ошибка Telegram: {e}")
+    except Exception as e:
+        print(f"⚠ Неожиданная ошибка: {e}")
+        
+@router.message(F.text == "Транзакция")
+async def transaction_handler(message: types.Message):
+    try:
+        await message.answer(
+            "Выберите действие с транзакциями:",
+            reply_markup=get_transaction_keyboard()
         )
     except AiogramError as e:
         print(f"⚠ Ошибка Telegram: {e}")
