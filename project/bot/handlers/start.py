@@ -6,7 +6,10 @@ router=Router()
 @router.message(CommandStart())
 async def start_handler(message: types.Message):   
     try:
-        await message.answer("Здравствуйте!")
+        await message.answer(
+            "Здравствуйте!",
+            reply_markup=get_main_keyboard()
+        )
     except AiogramError as e:
         print(f"⚠ Ошибка Telegram: {e}")
     except Exception as e:
