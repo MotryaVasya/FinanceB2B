@@ -40,7 +40,7 @@ async def get(session: AsyncSession, transaction_id: int) -> Transaction | None:
     """
     return await crud.get_transaction(session, transaction_id)
 
-async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
+async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction] | list[None]:
     """Получает список транзакций с пагинацией.
     
     Args:
