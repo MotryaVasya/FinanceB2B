@@ -4,7 +4,6 @@ from aiogram.exceptions import AiogramError
 from aiogram.types import Message
 from aiogram.filters import or_f
 from project.bot.keyboards.reply import start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard
-cash=4
 router = Router()
 help_text=("Привет! 👋 Вот как я могу помочь:\n"
             "💸 Транзакция — добавь доход или расход.\n"
@@ -31,7 +30,7 @@ async def start_handler(message: Message):
     try:
         await message.answer(
             welcome_text,
-            reply_markup=start_keyboard()
+            reply_markup= await start_keyboard()
         )
     except Exception as e:  
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -42,7 +41,7 @@ async def categories_handler(message: Message):
     try:
         await message.answer(
             "Выберите действие:",
-            reply_markup=get_categories_keyboard()
+            reply_markup= await get_categories_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -53,7 +52,7 @@ async def transaction_handler(message: Message):
     try:
         await message.answer(
             "Выберите действие с транзакциями:",
-            reply_markup=get_transaction_keyboard()
+            reply_markup= await get_transaction_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -64,7 +63,7 @@ async def help_handler(message: Message):
     try:
         
         await message.answer(
-            help_text,reply_markup=help_keyboard()
+            help_text,reply_markup= await help_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -83,11 +82,11 @@ async def start_handler_for_help(message: Message):
 
 @router.message(F.text=="Баланс")
 async def cash_handler(message: Message):
-    text=(f"💫 Ваш баланс: {cash}\nУ тебя всё под контролем! 🧘‍♂️\n ")
+    text=(f"💫 Ваш баланс: \nУ тебя всё под контролем! 🧘‍♂️\n ")
     try:
         await message.answer(
             text,
-            reply_markup=help_keyboard()
+            reply_markup=await help_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")

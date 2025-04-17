@@ -1,6 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
-def start_keyboard() -> ReplyKeyboardMarkup:
+async def start_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает основную клавиатуру меню.
     
@@ -23,7 +23,7 @@ def start_keyboard() -> ReplyKeyboardMarkup:
     return keyboard
 
 
-def get_categories_keyboard() -> ReplyKeyboardMarkup:
+async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для управления категориями.
     
@@ -44,7 +44,7 @@ def get_categories_keyboard() -> ReplyKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def get_transaction_keyboard() -> ReplyKeyboardMarkup:
+async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для управления транзакциями.
     
@@ -64,7 +64,7 @@ def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     return builder.as_markup(resize_keyboard=True)
 
 
-def help_keyboard() -> ReplyKeyboardMarkup:
+async def help_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для раздела помощи.
     
