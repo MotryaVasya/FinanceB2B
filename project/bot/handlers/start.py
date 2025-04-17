@@ -16,7 +16,6 @@ welcome_text = (
 pre_text=("🔙 Возвращаемся в главное меню!\n "
          "Чем займёмся дальше? 😊\n ")
 @router.message(CommandStart())
-@router.message(F.text==("Перейти в меню"))
 @router.message(Command("restart"))
 async def start_handler(message: types.Message):
     try:
@@ -66,6 +65,7 @@ async def help_handler(message: types.Message):
         print(f"⚠ Ошибка Telegram: {e}")
     except Exception as e:
         print(f"⚠ Неожиданная ошибка: {e}")
+@router.message(F.text==("Перейти в меню"))
 async def start_handler_for_help(message: types.Message):
     try:
         await message.answer(
@@ -78,11 +78,11 @@ async def start_handler_for_help(message: types.Message):
         print(f"нежданчик {e}")
 @router.message(F.text=="Баланс")
 async def cash_handler(message: types.Message):
+    text=(f"💫 Ваш баланс: {cash}\nУ тебя всё под контролем! 🧘‍♂️\n ")
     try:
-        text=(F"💫 Ваш баланс: {cash}\nУ тебя всё под контролем! 🧘‍♂️\n ")
         await message.answer(
             text,
-            reply_markup=help_keyboard
+            reply_markup=help_keyboard()
         )
     except AiogramError as e:
         print(f"Ошибка телеграм {e}")
