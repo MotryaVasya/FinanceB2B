@@ -4,22 +4,11 @@ def start_keyboard():
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="Статистика"), KeyboardButton(text="Категории")],
-            [KeyboardButton(text="Транзакция"), KeyboardButton(text="Баланс")],
+            [KeyboardButton(text="Транзакция"), KeyboardButton(text="Баланс")],[KeyboardButton(text="Помощь")]
         ],
         resize_keyboard=True
     )
     return keyboard
-
-def base_key():
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="Статистика"), KeyboardButton(text="Категории")],
-            [KeyboardButton(text="Транзакция"), KeyboardButton(text="Баланс")],
-        ],
-        resize_keyboard=True
-    )
-    return keyboard
-
 def get_categories_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     builder.add(
@@ -39,3 +28,11 @@ def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     )
     builder.adjust(3)
     return builder.as_markup(resize_keyboard=True)
+def help_keyboard():
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Перейти в меню")]
+        ],
+        resize_keyboard=True
+    )
+    return keyboard
