@@ -11,8 +11,6 @@ class UserCreate(UserBase):
     pass
 
 class UserUpdate(BaseModel):
-    firstname: Optional[str]
-    secondname: Optional[str] = None
     cash: float
 
 class UserOut(UserBase):
