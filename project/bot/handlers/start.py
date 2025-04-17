@@ -53,8 +53,9 @@ def validate_name(name: str) -> bool:
 
 
 @router.message(or_f(CommandStart(), Command("restart"), F.text.in_(["Перейти в меню", "Назад"])))
-async def start_handler(message: Message):
+async def start_handler(message: Message, state: FSMContext):
     try:
+        await state.clear()
         await message.answer(
             welcome_text,
             reply_markup=await start_keyboard()
@@ -64,8 +65,9 @@ async def start_handler(message: Message):
 
 
 @router.message(F.text == "Категории")
-async def categories_handler(message: Message):
+async def categories_handler(message: Message, state: FSMContext):
     try:
+        await state.clear()
         await message.answer(
             "Выберите действие:",
             reply_markup=await get_categories_keyboard()
@@ -121,15 +123,15 @@ async def categories_handler(message: Message):
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Транзакция")
-async def transaction_handler(message: Message):
+async def transaction_handler(message: Message, state: FSMContext):
     try:
+        await state.clear()
         await message.answer(
             "Выберите действие с транзакциями:",
             reply_markup=await get_transaction_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
 
 @router.message(F.text == "Помощь")
 async def help_handler(message: Message):
@@ -165,8 +167,10 @@ async def cash_handler(message: Message):
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Назад")
-async def back_handler(message: Message):
+async def back_handler(message: Message, state: FSMContext):
     try:
+        await state.clear()
+        
         prev_text = message.reply_to_message.text if message.reply_to_message else ""
         
         if "категори" in prev_text.lower():
@@ -179,7 +183,10 @@ async def back_handler(message: Message):
             await start_handler(message)
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+        await state.clear()
         await start_handler(message)
+
+
 @router.message(F.text == "Добавить")
 async def categories_handler(message: Message, state: FSMContext):
     try:
@@ -187,4 +194,3 @@ async def categories_handler(message: Message, state: FSMContext):
         await state.set_state(waiting_for_category_name)
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
-
