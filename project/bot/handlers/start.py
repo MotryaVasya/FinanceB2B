@@ -1,6 +1,5 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command, CommandStart
-from aiogram.exceptions import AiogramError
 from aiogram.types import Message
 from aiogram.filters import or_f
 from project.bot.keyboards.reply import start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard
@@ -25,12 +24,12 @@ welcome_text = (
 pre_text=("🔙 Возвращаемся в главное меню!\n "
          "Чем займёмся дальше? 😊\n ")
 
-@router.message(or_f(CommandStart(), Command("restart"), F.text == "Перейти в меню"))
+@router.message(or_f(CommandStart(), Command("restart"), F.text.in_(["Перейти в меню", "Назад"])))
 async def start_handler(message: Message):
     try:
         await message.answer(
             welcome_text,
-            reply_markup= await start_keyboard()
+            reply_markup=await start_keyboard()
         )
     except Exception as e:  
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -41,29 +40,27 @@ async def categories_handler(message: Message):
     try:
         await message.answer(
             "Выберите действие:",
-            reply_markup= await get_categories_keyboard()
+            reply_markup=await get_categories_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
 
 @router.message(F.text == "Транзакция")
 async def transaction_handler(message: Message):
     try:
         await message.answer(
             "Выберите действие с транзакциями:",
-            reply_markup= await get_transaction_keyboard()
+            reply_markup=await get_transaction_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-
-@router.message(F.text=="Помощь")
+@router.message(F.text == "Помощь")
 async def help_handler(message: Message):
     try:
-        
         await message.answer(
-            help_text,reply_markup= await help_keyboard()
+            help_text,
+            reply_markup=await help_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -90,3 +87,20 @@ async def cash_handler(message: Message):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
+@router.message(F.text == "Назад")
+async def back_handler(message: Message):
+    try:
+        prev_text = message.reply_to_message.text if message.reply_to_message else ""
+        
+        if "категори" in prev_text.lower():
+            await categories_handler(message)
+        elif "транзакци" in prev_text.lower():
+            await transaction_handler(message)
+        elif "помощь" in prev_text.lower():
+            await help_handler(message)
+        else:
+            await start_handler(message)
+    except Exception as e:
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+        await start_handler(message)

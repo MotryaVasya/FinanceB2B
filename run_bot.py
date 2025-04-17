@@ -3,8 +3,9 @@ from project.bot.handlers import start
 from project.bot.handlers.start import router
 from project.bot.keyboards.botCommands import set_bot_commands
 from aiogram import Bot, Dispatcher
+from project.core.config import config
 
-bot = Bot(token="7938224331:AAGw75HUIxB9paXt5VWM_F7VpNPiy5KHio4")
+bot = Bot(token=config.BOT_TOKEN)
 dp = Dispatcher()
 
 async def main():

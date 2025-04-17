@@ -1,5 +1,12 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
+
+async def add_back_button(keyboard: ReplyKeyboardMarkup) -> ReplyKeyboardMarkup:
+    new_keyboard = keyboard.keyboard.copy()
+    new_keyboard.append([KeyboardButton(text="Назад")])
+    return ReplyKeyboardMarkup(keyboard=new_keyboard, resize_keyboard=True)
+
+
 async def start_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает основную клавиатуру меню.
@@ -12,15 +19,13 @@ async def start_keyboard() -> ReplyKeyboardMarkup:
     Returns:
         ReplyKeyboardMarkup: Клавиатура с основными действиями.
     """
-    keyboard = ReplyKeyboardMarkup(
+    return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="Статистика"), KeyboardButton(text="Категории")],
-            [KeyboardButton(text="Транзакция"), KeyboardButton(text="Баланс")],
-            [KeyboardButton(text="Помощь")]
+            [KeyboardButton(text="Статистика"), KeyboardButton(text="Категории"),KeyboardButton(text="Транзакция")],
+            [KeyboardButton(text="Баланс"),KeyboardButton(text="Помощь")],
         ],
         resize_keyboard=True
     )
-    return keyboard
 
 
 async def get_categories_keyboard() -> ReplyKeyboardMarkup:
@@ -40,8 +45,9 @@ async def get_categories_keyboard() -> ReplyKeyboardMarkup:
         KeyboardButton(text="Изменить"),
         KeyboardButton(text="Посмотреть список существующих"),
     )
-    builder.adjust(2)  # Первые 2 кнопки в одной строке, остальные переносятся
-    return builder.as_markup(resize_keyboard=True)
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
 
 
 async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
@@ -60,8 +66,9 @@ async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
         KeyboardButton(text="Удалить"),
         KeyboardButton(text="Изменить"),
     )
-    builder.adjust(3)  # Все 3 кнопки в одной строке
-    return builder.as_markup(resize_keyboard=True)
+    builder.adjust(3)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
 
 
 async def help_keyboard() -> ReplyKeyboardMarkup:
@@ -80,4 +87,4 @@ async def help_keyboard() -> ReplyKeyboardMarkup:
         ],
         resize_keyboard=True
     )
-    return keyboard
+    return await add_back_button(keyboard)
