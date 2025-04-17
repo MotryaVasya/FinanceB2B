@@ -1,15 +1,15 @@
 """
-Модуль для работы с пользователями в базе данных.
+Модуль для работы с категориями в базе данных.
 
-Реализует CRUD-операции (Create, Read, Update, Delete) для сущности User
+Реализует CRUD-операции (Create, Read, Update, Delete) для сущности Category
 с использованием асинхронного SQLAlchemy.
 
 Основные функции:
-- create_user - создание нового пользователя
-- get_user - получение пользователя по ID
-- get_all_user - получение списка пользователей с пагинацией
-- update_user - обновление данных пользователей
-- delete_user - удаление пользователя
+- create_category - создание новой категории
+- get_category - получение категории по ID
+- get_all_categories - получение списка категорий с пагинацией
+- update_category - обновление данных категории
+- delete_category - удаление категории
 
 Особенности реализации:
 1. Асинхронная работа с базой данных через AsyncSession
@@ -21,10 +21,10 @@
 Типичный сценарий использования:
 ```
     from sqlalchemy.ext.asyncio import AsyncSession
-    from models import UserCreate
+    from models import CategoryCreate
     session = AsyncSession(...)
-    data = UserCreate(...)
-    user = await create_user(session, data)
+    data = CategoryCreate(...)
+    category = await create_category(session, data)
 ```
 Логирование:
 Все ошибки логируются в формате JSON с полями:
@@ -38,6 +38,7 @@
 - Поддержка async/await
 - Pydantic для валидации данных
 """
+
 from datetime import datetime
 import json
 import logging
@@ -46,71 +47,71 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
-from models.category import User # TODO потом поменять импорт из category
-from schemas.user import UserCreate, UserUpdate
+from models.category import Category # TODO потом поменять импорт из category
+from schemas.category import CategoryCreate, CategoryUpdate
 
-async def create_user(session: AsyncSession, data: UserCreate) -> User | None:
+async def create_category(session: AsyncSession, data: CategoryCreate) -> Category | None:
     """
-    Создает нового пользователя в базе данных.
+    Создает новую категорию в базе данных.
 
     Args:
         session (AsyncSession): Асинхронная сессия для работы с БД.
-        data (UserCreate): Данные для создания пользователя.
+        data (CategoryCreate): Данные для создания категории.
 
     Returns:
-        User: Созданный объект пользователя или None при ошибке.
+        Category: Созданный объект категории или None при ошибке.
     """
     try:
-        user = User(**data.model_dump())
-        session.add(user)
+        category = Category(**data.model_dump())
+        session.add(category)
         await session.commit()
-        await session.refresh(user)
-        return user
+        await session.refresh(category)
+        return category
     except (ValueError, DataError, ProgrammingError) as e:
         await session.rollback()
         logging.error(json.dumps({
-            "message": "Ошибка создания пользователя",
+            "message": "Ошибка создания категории",
             "data": data,
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
         return None
 
-async def get_user(session: AsyncSession, user_id: int) -> User | None:
+async def get_category(session: AsyncSession, category_id: int) -> Category | None:
     """
-    Получает пользователя по его идентификатору.
+    Получает категорию по её идентификатору.
 
     Args:
         session (AsyncSession): Асинхронная сессия для работы с БД.
-        user_id (int): Идентификатор пользователя.
+        category_id (int): Идентификатор категории.
 
     Returns:
-        User: Объект пользователя, если найден, иначе None.
+        Category: Объект категории, если найден, иначе None.
     """
-    if user_id <= 0:
+    if category_id <= 0:
         return None
     try:
-        user = await session.execute(select(User).where(User.id == user_id))
-        return user.scalar_one_or_none()
+        category = await session.execute(select(Category).where(Category.id == category_id))
+        return category.scalar_one_or_none()
     except (NoResultFound, DatabaseError) as e:
         logging.error(json.dumps({
-            "message": "Ошибка получения пользователя",
-            "user_id": user_id,
+            "message": "Ошибка получения категории",
+            "category_id": category_id,
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
         return None
 
-async def get_all_users(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[User]:
+async def get_all_categories(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
     """
-    Получает список пользователей с диапозоном.
+    Получает список категорий с диапозоном.
 
     Пример использования:
-        # Получить первые 10 пользователей
-        users = await get_all_users(session, skip=0, limit=10)
+        # Получить первые 10 категорий
+        categories = await get_all_categories(session, skip=0, limit=10)
         
-        # Получить следующую порцию (пользователей 11-20)
-        next_users = await get_all_users(session, skip=10, limit=10)
+        # Получить следующую порцию (категорий 11-20)
+        next_categ = await get_all_categories(session, skip=10, limit=10)
 
     Args:
         session (AsyncSession): Асинхронная сессия для работы с БД.
@@ -120,84 +121,84 @@ async def get_all_users(session: AsyncSession, skip: int = 0, limit: int = 100) 
             Например, limit=20 вернет не более 20 транзакций.
 
     Returns:
-        list[User]: Список пользователей. Возвращает пустой список, если:
-            - пользователи отсутствуют
+        list[Category]: Список категорий. Возвращает пустой список, если:
+            - категории отсутствуют
             - указана комбинация skip/limit за пределами общего количества
             - произошла ошибка при запросе
     """
     try:
-        users = await session.execute(select(User).offset(skip).limit(limit))
-        return users.scalars().all() or []
+        categories = await session.execute(select(Category).offset(skip).limit(limit))
+        return categories.scalars().all() or []
     except (SQLAlchemyError) as e:
         logging.error(json.dumps({
-            "message": "Ошибка получения списка пользователей",
+            "message": "Ошибка получения списка категорий",
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
         return []
         
-async def update_user(session: AsyncSession, user_id: int, data: UserUpdate) -> User | None:
+async def update_category(session: AsyncSession, category_id: int, data: CategoryUpdate) -> Category | None:
     """
-    Обновляет данные пользователя.
+    Обновляет данные категории.
 
     Args:
         session (AsyncSession): Асинхронная сессия для работы с БД.
-        user_id (int): Идентификатор пользователя для обновления.
-        data (UserUpdate): Данные для обновления.
+        category_id (int): Идентификатор категории для обновления.
+        data (CategoryUpdate): Данные для обновления.
 
     Returns:
-        User: Обновленный объект пользователя или None, если пользователь не найден.
+        Category: Обновленный объект категории или None, если категория не найдена.
     """
-    if user_id <= 0:
+    if category_id <= 0:
         return None
     try:
-        user = await get_user(session, user_id)
-        if not user:
+        category = await get_category(session, category_id)
+        if not category:
             return None
         
         for key, value in data.model_dump(exclude_unset=True).items():
-            setattr(user, key, value)
+            setattr(category, key, value)
         
         await session.commit()
-        await session.refresh(user)
-        return user
+        await session.refresh(category)
+        return category
 
     except (InvalidRequestError, AttributeError) as e:
         await session.rollback()
         logging.error(json.dumps({
-            "message": "Ошибка обновления пользователя",
+            "message": "Ошибка обновления категории",
             "data": data.model_dump(),
-            "user_id": user_id,
+            "category_id": category_id,
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
         return None
 
-async def delete_user(session: AsyncSession, user_id: int) -> bool:
+async def delete_category(session: AsyncSession, category_id: int) -> bool:
     """
-    Удаляет транзакцию по её идентификатору.
+    Удаляет категорию по её идентификатору.
 
     Args:
         session (AsyncSession): Асинхронная сессия для работы с БД.
-        user_id (int): Идентификатор пользователя для удаления.
+        category_id (int): Идентификатор категории для удаления.
 
     Returns:
-        bool: True, если пользователь удален, False если пользователь не найден.
+        bool: True, если категория удалена, False если категория не найдена.
     """
-    if user_id <= 0:
+    if category_id <= 0:
         return False
     try:
-        user = await get_user(session, user_id)
-        if not user:
+        category = await get_category(session, category_id)
+        if not category:
             return False
-        await session.delete(user)
+        await session.delete(category)
         await session.commit()
         return True
     except (DBAPIError, DisconnectionError) as e:
         await session.rollback()
         logging.error(json.dumps({
-            "message": "Ошибка удаления пользователя",
-            "user_id": user_id,
+            "message": "Ошибка удаления категории",
+            "category_id": category_id,
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
