@@ -11,9 +11,9 @@
 - Поддержка пагинации для списковых запросов
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.crud import category as crud
-from db.schemas.category import CategoryCreate, CategoryUpdate
-from db.models.category import Category # TODO потом поменять импорт из category
+from project.db.crud import category as crud
+from project.db.schemas.category import CategoryCreate, CategoryUpdate
+from project.db.models.category import Category # TODO потом поменять импорт из category
 
 async def create(session: AsyncSession, data: CategoryCreate)-> Category | None:
     """Создает новую категорию.

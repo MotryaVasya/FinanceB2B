@@ -12,9 +12,9 @@
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.crud import transaction as crud
-from db.schemas.transaction import TransactionCreate, TransactionUpdate
-from db.models.category import Transaction # TODO потом поменять импорт из category
+from project.db.crud import transaction as crud
+from project.db.schemas.transaction import TransactionCreate, TransactionUpdate
+from project.db.models.category import Transaction # TODO потом поменять импорт из category
 
 async def create(session: AsyncSession, data: TransactionCreate)-> Transaction | None:
     """Создает новую транзакцию.

@@ -47,8 +47,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
-from models.category import Transaction # TODO потом поменять импорт из category
-from schemas.transaction import TransactionCreate, TransactionUpdate
+from project.db.models.category import Transaction # TODO потом поменять импорт из category
+from project.db.schemas.transaction import TransactionCreate, TransactionUpdate
 
 async def create_transaction(session: AsyncSession, data: TransactionCreate) -> Transaction | None:
     """

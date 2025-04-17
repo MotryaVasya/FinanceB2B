@@ -11,9 +11,9 @@
 - Поддержка пагинации для списковых запросов
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.crud import user as crud
-from db.schemas.user import UserCreate, UserUpdate
-from db.models.category import User # TODO потом поменять импорт из category
+from project.db.crud  import user as crud
+from project.db.schemas.user import UserCreate, UserUpdate
+from project.db.models.category import User # TODO потом поменять импорт из category
 
 async def create(session: AsyncSession, data: UserCreate)-> User | None:
     """Создает нового пользователя.

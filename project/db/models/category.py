@@ -1,48 +1,43 @@
 from datetime import datetime
-from sqlalchemy import Column, DateTime, Integer, String, Numeric, ForeignKey, create_engine
+from sqlalchemy import Integer, String, Numeric, DateTime, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from typing import Optional
 
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
-engine = create_engine('sqlite:///finanse.db')
+class Base(DeclarativeBase):
+    pass
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = "user"
 
-    id = Column(Integer, primary_key=True)
-    firstname = Column(String, nullable=False)
-    secondname= Column(String, nullable=True)
-    tg_id= Column(Integer, nullable=False)
-    cash = Column(Numeric, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    firstname: Mapped[str] = mapped_column(String, nullable=False)
+    secondname: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tg_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    cash: Mapped[float] = mapped_column(Numeric, nullable=False)
 
-    # TODO спросить по поводу numeric нам нужен float в пайтоне
+    categories: Mapped[list["Category"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    transactions: Mapped[list["Transaction"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 class Category(Base):
-    __tablename__ = 'category'
+    __tablename__ = "category"
 
-    id= Column(Integer, primary_key=True)
-    nameCategory= Column(String, nullable=False)
-    type = Column(Integer, nullable=False)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name_category: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("user.id"), nullable=True)
 
-    user= relationship('User', backref='categories')
-
+    user: Mapped[Optional[User]] = relationship(back_populates="categories")
+    transactions: Mapped[list["Transaction"]] = relationship(back_populates="category", cascade="all, delete-orphan")
 
 class Transaction(Base):
-    __tablename__ = 'transaction'
+    __tablename__ = "transaction"
 
-    id= Column(Integer, primary_key=True)
-    fullSum = Column(Numeric, nullable=False)
-    date = Column(DateTime, default=datetime.now)
-    description = Column(String, nullable=False)
-    category_id = Column(Integer, ForeignKey('category.id'))  
-    user_id = Column(Integer, ForeignKey('user.id'))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    full_sum: Mapped[float] = mapped_column(Numeric, nullable=False)
+    date: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
 
-   
-    category = relationship('Category', backref='transactions')
-    user = relationship('User', backref='transactions')
-
-
-Base.metadata.create_all(engine)
+    category: Mapped["Category"] = relationship(back_populates="transactions")
+    user: Mapped["User"] = relationship(back_populates="transactions")

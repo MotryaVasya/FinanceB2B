@@ -46,8 +46,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
-from models.category import User # TODO потом поменять импорт из category
-from schemas.user import UserCreate, UserUpdate
+from project.db.models.category import User # TODO потом поменять импорт из category
+from project.db.schemas.user import UserCreate, UserUpdate
 
 async def create_user(session: AsyncSession, data: UserCreate) -> User | None:
     """

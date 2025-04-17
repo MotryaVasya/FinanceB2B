@@ -5,25 +5,10 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from project.db.schemas.category import CategoryCreate, CategoryUpdate, CategoryOut
-from project.db.session import Session # TODO надо поменять импорт, сессию желательно поставить в другой модуль и сюда импортировать get_db
-from services import category_service
+from project.db.session import get_db 
+from project.services import category_service
 
 
-#TODO get_db() засунуть в один модуль
-async def get_db():
-    """
-    Генератор сессий для зависимостей FastAPI.
-    Автоматически закрывает сессию после завершения запроса.
-    """
-    async with Session() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
 
 
 router = APIRouter(prefix='/categories', tags=['Categories'])

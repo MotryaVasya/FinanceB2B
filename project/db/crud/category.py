@@ -47,8 +47,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
-from models.category import Category # TODO потом поменять импорт из category
-from schemas.category import CategoryCreate, CategoryUpdate
+from project.db.models.category import Category # TODO потом поменять импорт из category
+from project.db.schemas.category import CategoryCreate, CategoryUpdate
 
 async def create_category(session: AsyncSession, data: CategoryCreate) -> Category | None:
     """
