@@ -2,8 +2,12 @@ from aiogram import Router, types, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 from aiogram.filters import or_f
-from project.bot.keyboards.reply import start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from project.bot.keyboards.reply import start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard,get_all_categories,gety_type_keyboard
 router = Router()
+waiting_for_category_name = State("waiting_for_category_name")
+waiting_for_category_type = State("waiting_for_category_type")
 help_text=("Привет! 👋 Вот как я могу помочь:\n"
             "💸 Транзакция — добавь доход или расход.\n"
             "📂 Категории — управляй своими категориями.\n"
@@ -23,6 +27,30 @@ welcome_text = (
 
 pre_text=("🔙 Возвращаемся в главное меню!\n "
          "Чем займёмся дальше? 😊\n ")
+
+
+def validate_name(name: str) -> bool:
+    """
+    Проверяет название по заданным правилам:
+    1. Длина не более 50 символов
+    2. Начинается с буквы или цифры
+    3. Не содержит специальных символов @#$% и т.п.
+    
+    :param name: Название для проверки
+    :return: True если название валидно, False если нет
+    """
+    # Проверка длины
+    if len(name) > 50:
+        return False
+    
+    # Проверка первого символа (должен быть буква или цифра)
+    if not name[0].isalnum():
+        return False
+    
+    # Проверка на допустимые символы (только буквы, цифры, пробелы и дефисы/подчёркивания)
+    
+    return True
+
 
 @router.message(or_f(CommandStart(), Command("restart"), F.text.in_(["Перейти в меню", "Назад"])))
 async def start_handler(message: Message):
@@ -45,6 +73,53 @@ async def categories_handler(message: Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
+@router.message(waiting_for_category_name)
+async def process_category_name(message: Message, state: FSMContext):
+    try:
+        category_name = message.text.strip()
+        
+        if not validate_name(category_name):
+            await message.answer(
+                "❌ Некорректное название!\n"
+                "Требования:\n"
+                "- Макс. 50 символов\n"
+                "- Начинается с буквы/цифры\n"
+                "- Без спецсимволов (@, # и др.)\n"
+                "Введите снова:"
+            )
+            return
+        
+        await message.answer(f"✅ название '{category_name}' добавлено!")
+        await state.set_state(waiting_for_category_type)
+        await message.answer("Выберите тип",
+                             reply_markup=await gety_type_keyboard()
+                             )
+    except Exception as e:
+        await message.answer("⚠️ Произошла ошибка, попробуйте позже")
+        print(f"Ошибка: {e.__class__.__name__}: {e}")
+
+        
+@router.message(or_f(F.text == "Доход",F.text == "Расход"))
+async def after_add(message: Message):
+    try:
+        await message.answer("🎉 Отлично! Я сохранил вашу категорию 😊"
+        "🔙 Возвращаемся в главное меню!",
+        reply_markup=await start_keyboard()
+        )
+    except Exception as e:
+        print(f"Ошибка: {e.__class__.__name__}: {e}")
+
+
+@router.message(F.text=="Посмотреть список существующих")
+async def categories_handler(message: Message):
+    try:
+        await message.answer(
+            "📂 Вот список всех категорий! 😊",
+            reply_markup= await get_all_categories()
+        )
+    except Exception as e:
+        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+
 @router.message(F.text == "Транзакция")
 async def transaction_handler(message: Message):
     try:
@@ -54,6 +129,7 @@ async def transaction_handler(message: Message):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
 
 @router.message(F.text == "Помощь")
 async def help_handler(message: Message):
@@ -104,3 +180,11 @@ async def back_handler(message: Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
         await start_handler(message)
+@router.message(F.text == "Добавить")
+async def categories_handler(message: Message, state: FSMContext):
+    try:
+        await message.answer("Введите название вашей категории:")
+        await state.set_state(waiting_for_category_name)
+    except Exception as e:
+        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+
