@@ -43,9 +43,10 @@ async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     builder.add(
         KeyboardButton(text="Добавить"),
         KeyboardButton(text="Изменить"),
+        KeyboardButton(text="Удалить"),
         KeyboardButton(text="Посмотреть список существующих"),
     )
-    builder.adjust(2)
+    builder.adjust(2, 1, 1)
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
 
