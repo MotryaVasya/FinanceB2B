@@ -1,6 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
-arr = ["зарплата","продукты","кафе","досуг","здоровье","транспорт","еще"]
+arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт","Еще"]
 async def add_back_button(keyboard: ReplyKeyboardMarkup) -> ReplyKeyboardMarkup:
     new_keyboard = keyboard.keyboard.copy()
     new_keyboard.append([KeyboardButton(text="Назад")])
@@ -46,7 +46,7 @@ async def get_categories_keyboard() -> ReplyKeyboardMarkup:
         KeyboardButton(text="Удалить"),
         KeyboardButton(text="Посмотреть список существующих"),
     )
-    builder.adjust(2, 1, 1)
+    builder.adjust(3, 1, 1)
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
 
@@ -71,7 +71,24 @@ async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
 
+async def Money_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Перейти в меню"),
+            KeyboardButton(text="Пополнить"),
+        )
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
 
+async def Afteradd_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Перейти к транзакциям"),
+        )
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
 async def help_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для раздела помощи.
@@ -88,16 +105,16 @@ async def help_keyboard() -> ReplyKeyboardMarkup:
         ],
         resize_keyboard=True
     )
-    return await add_back_button(keyboard)
+    return keyboard 
 
 async def gety_type_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="Доход"), KeyboardButton(text="Расход")],
-        ],
-        resize_keyboard=True
-    )
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Доход"), KeyboardButton(text="Расход"),
+        )
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
 
 async def get_all_categories() -> ReplyKeyboardMarkup:
     """
@@ -114,10 +131,12 @@ async def get_all_categories() -> ReplyKeyboardMarkup:
     builder.add(
         KeyboardButton(text=arr[0]),
         KeyboardButton(text=arr[1]),
+        KeyboardButton(text=arr[2]),
         KeyboardButton(text=arr[3]),
         KeyboardButton(text=arr[4]),
         KeyboardButton(text=arr[5]),
         KeyboardButton(text=arr[6])
     )
-    builder.adjust(2)  # Первые 2 кнопки в одной строке, остальные переносятся
-    return builder.as_markup(resize_keyboard=True)
+    builder.adjust(3)  # Первые 2 кнопки в одной строке, остальные переносятся
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)

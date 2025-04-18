@@ -3,9 +3,9 @@ from project.bot.handlers import start
 from project.bot.handlers.start import router
 from project.bot.keyboards.botCommands import set_bot_commands
 from aiogram import Bot, Dispatcher
-from project.core.config import config
 
-bot = Bot(token=config.BOT_TOKEN)
+
+bot = Bot("7938224331:AAGw75HUIxB9paXt5VWM_F7VpNPiy5KHio4")
 dp = Dispatcher()
 
 async def main():
@@ -13,5 +13,5 @@ async def main():
     await set_bot_commands(bot)
     await dp.start_polling(bot)
     print("bot started...")
-
+    print("gaw")
 asyncio.run(main())

@@ -4,7 +4,7 @@ from aiogram.types import Message
 from aiogram.filters import or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from project.bot.keyboards.reply import start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard,get_all_categories,gety_type_keyboard
+from project.bot.keyboards.reply import start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard,get_all_categories,gety_type_keyboard,Money_keyboard,Afteradd_keyboard
 router = Router()
 waiting_for_category_name = State("waiting_for_category_name")
 waiting_for_category_type = State("waiting_for_category_type")
@@ -97,7 +97,8 @@ async def process_category_name(message: Message, state: FSMContext):
             )
             return
         
-        await message.answer(f"✅ название '{category_name}' добавлено!")
+        await message.answer(f"🎉 Готово! Ваша категория '{category_name}' добавлена.")
+        
         await state.set_state(waiting_for_category_type)
         await message.answer("Выберите тип",
                              reply_markup=await gety_type_keyboard()
@@ -128,7 +129,7 @@ async def categories_handler(message: Message):
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(F.text == "Транзакция")
+@router.message(or_f(F.text == "Транзакция",F.text=="Перейти к транзакциям"))
 async def transaction_handler(message: Message, state: FSMContext):
     try:
         await state.clear()
@@ -167,11 +168,20 @@ async def cash_handler(message: Message):
     try:
         await message.answer(
             text,
-            reply_markup=await help_keyboard()
+            reply_markup=await Money_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
+@router.message(F.text=="Пополнить")
+async def  Add_money_handler(message: Message):
+    text=(f"💰 Хотите пополнить баланс?\n 🏦 Перейдите в раздел Транзакции для пополнения! 💳📈\n ")
+    try:
+        await message.answer(
+            text,
+            reply_markup=await Afteradd_keyboard()
+        )
+    except Exception as e:
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 @router.message(F.text == "Назад")
 async def back_handler(message: Message, state: FSMContext):
     try:
@@ -196,7 +206,7 @@ async def back_handler(message: Message, state: FSMContext):
 @router.message(F.text == "Добавить")
 async def categories_handler(message: Message, state: FSMContext):
     try:
-        await message.answer("Введите название вашей категории:")
+        await message.answer("✏️Введите название вашей категории:")
         await state.set_state(waiting_for_category_name)
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
