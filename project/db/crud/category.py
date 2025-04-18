@@ -66,7 +66,7 @@ async def create_category(session: AsyncSession, data: CategoryCreate) -> Catego
         session.add(category)
         await session.commit()
         await session.refresh(category)
-        return category
+        return category.to_pydantic()
     except (ValueError, DataError, ProgrammingError) as e:
         await session.rollback()
         logging.error(json.dumps({
@@ -77,13 +77,14 @@ async def create_category(session: AsyncSession, data: CategoryCreate) -> Catego
         }))
         return None
 
-async def get_category(session: AsyncSession, category_id: int) -> Category | None:
+async def get_category(session: AsyncSession, category_id: int, as_pydantic: bool = True) -> Category | None:
     """
     Получает категорию по её идентификатору.
 
     Args:
         session (AsyncSession): Асинхронная сессия для работы с БД.
         category_id (int): Идентификатор категории.
+        as_pydantic (bool): Переводит в тип (pydantic) если True, иначе тип Category
 
     Returns:
         Category: Объект категории, если найден, иначе None.
@@ -91,8 +92,14 @@ async def get_category(session: AsyncSession, category_id: int) -> Category | No
     if category_id <= 0:
         return None
     try:
-        category = await session.execute(select(Category).where(Category.id == category_id))
-        return category.scalar_one_or_none()
+        result = await session.execute(select(Category).filter(Category.id == category_id))
+        if not result:
+            return None
+        category = result.scalars().first()
+        if as_pydantic:
+            return category.to_pydantic() if category else None
+        else:
+            return category if category else None
     except (NoResultFound, DatabaseError) as e:
         logging.error(json.dumps({
             "message": "Ошибка получения категории",
@@ -127,8 +134,9 @@ async def get_all_categories(session: AsyncSession, skip: int = 0, limit: int = 
             - произошла ошибка при запросе
     """
     try:
-        categories = await session.execute(select(Category).offset(skip).limit(limit))
-        return categories.scalars().all() or []
+        result = await session.execute(select(Category).offset(skip).limit(limit))
+        categories = result.scalars().all()
+        return [category.to_pydantic() for category in categories] or []
     except (SQLAlchemyError) as e:
         logging.error(json.dumps({
             "message": "Ошибка получения списка категорий",
@@ -152,7 +160,7 @@ async def update_category(session: AsyncSession, category_id: int, data: Categor
     if category_id <= 0:
         return None
     try:
-        category = await get_category(session, category_id)
+        category = await get_category(session, category_id, False)
         if not category:
             return None
         
@@ -161,7 +169,7 @@ async def update_category(session: AsyncSession, category_id: int, data: Categor
         
         await session.commit()
         await session.refresh(category)
-        return category
+        return category.to_pydantic()
 
     except (InvalidRequestError, AttributeError) as e:
         await session.rollback()
@@ -188,7 +196,7 @@ async def delete_category(session: AsyncSession, category_id: int) -> bool:
     if category_id <= 0:
         return False
     try:
-        category = await get_category(session, category_id)
+        category = await get_category(session, category_id, False)
         if not category:
             return False
         await session.delete(category)

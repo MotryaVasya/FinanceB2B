@@ -1,10 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 
 class UserBase(BaseModel):
     firstname: str
     secondname: Optional[str] = None
+    tg_id: int
     cash: float
 
 class UserCreate(UserBase):
@@ -17,6 +18,7 @@ class UserOut(UserBase):
     id: int
 
     class Config:
-        orm_mode = True
+        model_config = ConfigDict(from_attributes=True)
+
 
 # TODO спросить по поводу numeric нам нужен float в пайтоне 

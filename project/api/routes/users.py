@@ -17,6 +17,8 @@ router = APIRouter(prefix='/users', tags=['Users'])
 async def create_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
     try:
         return await user_service.create(db, data)
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при созданиии пользователя на стороне API",
@@ -28,9 +30,11 @@ async def create_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
 async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     try:
         user = await user_service.get(db, user_id)
-        if not user:
+        if user is None:
             raise HTTPException(404, 'User not found')
         return user
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при получении пользователя на стороне API",
@@ -45,6 +49,8 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
 async def get_users(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     try:
         return await user_service.get_all(db, skip, limit)
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при получении пользователей на стороне API",
@@ -58,6 +64,8 @@ async def update_user(user_id: int, data: UserUpdate, db: AsyncSession = Depends
         if not user:
             raise HTTPException(404, "User not found")
         return user
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при обновлении пользователя на стороне API",
@@ -74,6 +82,8 @@ async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
         if not success:
             raise HTTPException(404, "User not found")
         return {'detail': 'User deleted'}
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при удалении пользователя на стороне API",

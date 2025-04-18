@@ -1,4 +1,5 @@
 from datetime import datetime
+from fastapi import status
 import json
 import logging
 
@@ -16,6 +17,8 @@ router = APIRouter(prefix='/transactions', tags=['Transactions'])
 async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends(get_db)):
     try:
         return await transaction_service.create(db, data)
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при созданиии транцакции на стороне API",
@@ -23,13 +26,17 @@ async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends
             "time": datetime.now().isoformat(),
         }))
 
-@router.get('/{transaction_id}', response_model=TransactionOut)
+@router.get('/{transaction_id}', response_model=TransactionOut, 
+            responses={404: {
+                "description": "Transaction not found",}})
 async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db)):
     try:
         transaction = await transaction_service.get(db, transaction_id)
-        if not transaction:
+        if transaction is None:
             raise HTTPException(404, 'Transaction not found')
         return transaction
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при получении транзакции на стороне API",
@@ -44,6 +51,8 @@ async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db
 async def get_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     try:
         return await transaction_service.get_all(db, skip, limit)
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при получении транзакций на стороне API",
@@ -54,9 +63,11 @@ async def get_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = D
 async def update_transaction(transaction_id: int, data: TransactionUpdate, db: AsyncSession = Depends(get_db)):
     try:
         transaction = await transaction_service.update(db, transaction_id, data)
-        if not transaction:
+        if transaction is None:
             raise HTTPException(404, "Transaction not found")
         return transaction
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при обновлении транзакций на стороне API",
@@ -73,6 +84,8 @@ async def delete_transaction(transaction_id: int, db: AsyncSession = Depends(get
         if not success:
             raise HTTPException(404, "Transaction not found")
         return {'detail': 'Transaction deleted'}
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при удалении транзакции на стороне API",

@@ -66,33 +66,39 @@ async def create_transaction(session: AsyncSession, data: TransactionCreate) -> 
         session.add(transaction)
         await session.commit()
         await session.refresh(transaction)
-        return transaction
+        return transaction.to_pydantic()
     except (ValueError, DataError, ProgrammingError) as e:
         await session.rollback()
         logging.error(json.dumps({
             "message": "Ошибка создания транзакции",
-            "data": data,
+            "data": data.model_dump(),
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
         return None
 
-async def get_transaction(session: AsyncSession, transaction_id: int) -> Transaction | None:
+async def get_transaction(session: AsyncSession, transaction_id: int, as_pydantic: bool = True) -> Transaction | None:
     """
     Получает транзакцию по её идентификатору.
 
     Args:
         session (AsyncSession): Асинхронная сессия для работы с БД.
         transaction_id (int): Идентификатор транзакции.
-
+        as_pydantic (bool): Переводит в тип (pydantic) если True, иначе тип Transaction
     Returns:
         Transaction: Объект транзакции, если найден, иначе None.
     """
     if transaction_id <= 0:
         return None
     try:
-        transaction = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
-        return transaction.scalar_one_or_none()
+        result = await session.execute(select(Transaction).where(Transaction.id == transaction_id))
+        transaction = result.scalars().first()
+        if transaction is None:
+            return None
+        if as_pydantic:
+            return transaction.to_pydantic()
+        else:
+            return transaction
     except (NoResultFound, DatabaseError) as e:
         logging.error(json.dumps({
             "message": "Ошибка получения транзакции",
@@ -127,8 +133,9 @@ async def get_all_transactions(session: AsyncSession, skip: int = 0, limit: int 
             - произошла ошибка при запросе
     """
     try:
-        transactions = await session.execute(select(Transaction).offset(skip).limit(limit))
-        return transactions.scalars().all() or []
+        result = await session.execute(select(Transaction).offset(skip).limit(limit))
+        transactions = result.scalars().all()
+        return [transaction.to_pydantic() for transaction in transactions] or []
     except (SQLAlchemyError) as e:
         logging.error(json.dumps({
             "message": "Ошибка получения списка транзакций",
@@ -152,7 +159,7 @@ async def update_transaction(session: AsyncSession, transaction_id: int, data: T
     if transaction_id <= 0:
         return None
     try:
-        transaction = await get_transaction(session, transaction_id)
+        transaction = await get_transaction(session, transaction_id, False)
         if not transaction:
             return None
         
@@ -161,7 +168,7 @@ async def update_transaction(session: AsyncSession, transaction_id: int, data: T
         
         await session.commit()
         await session.refresh(transaction)
-        return transaction
+        return transaction.to_pydantic()
 
     except (InvalidRequestError, AttributeError) as e:
         await session.rollback()
@@ -188,7 +195,7 @@ async def delete_transaction(session: AsyncSession, transaction_id: int) -> bool
     if transaction_id <= 0:
         return False
     try:
-        transaction = await get_transaction(session, transaction_id)
+        transaction = await get_transaction(session, transaction_id, False)
         if not transaction:
             return False
         await session.delete(transaction)

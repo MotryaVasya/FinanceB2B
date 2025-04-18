@@ -17,6 +17,8 @@ router = APIRouter(prefix='/categories', tags=['Categories'])
 async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_db)):
     try:
         return await category_service.create(db, data)
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при созданиии категории на стороне API",
@@ -31,6 +33,8 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)):
         if not category:
             raise HTTPException(404, 'Category not found')
         return category
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при получении категории на стороне API",
@@ -45,6 +49,8 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)):
 async def get_categories(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     try:
         return await category_service.get_all(db, skip, limit)
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при получении категорий на стороне API",
@@ -58,6 +64,8 @@ async def update_category(category_id: int, data: CategoryUpdate, db: AsyncSessi
         if not category:
             raise HTTPException(404, "Category not found")
         return category
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при обновлении категории на стороне API",
@@ -74,6 +82,8 @@ async def delete_category(category_id: int, db: AsyncSession = Depends(get_db)):
         if not success:
             raise HTTPException(404, "Category not found")
         return {'detail': 'Category deleted'}
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(json.dumps({
             "message": "Ошибка при удалении категории на стороне API",

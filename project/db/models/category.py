@@ -3,6 +3,10 @@ from sqlalchemy import Integer, String, Numeric, DateTime, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional
 
+from project.db.schemas.category import CategoryOut
+from project.db.schemas.transaction import TransactionOut
+from project.db.schemas.user import UserOut
+
 class Base(DeclarativeBase):
     pass
 
@@ -18,6 +22,14 @@ class User(Base):
     categories: Mapped[list["Category"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
+    def to_pydantic(self):
+        return UserOut(
+            id=self.id, # TODO поменять просто на id 
+            firstname=self.firstname,
+            secondname=self.secondname,
+            cash=self.cash
+        )
+
 class Category(Base):
     __tablename__ = "category"
 
@@ -28,6 +40,14 @@ class Category(Base):
 
     user: Mapped[Optional[User]] = relationship(back_populates="categories")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="category", cascade="all, delete-orphan")
+
+    def to_pydantic(self):
+        return CategoryOut(
+            id=self.id,
+            nameCategory=self.name_category,
+            type=self.type,
+            user_id=self.user_id
+        )
 
 class Transaction(Base):
     __tablename__ = "transaction"
@@ -41,3 +61,13 @@ class Transaction(Base):
 
     category: Mapped["Category"] = relationship(back_populates="transactions")
     user: Mapped["User"] = relationship(back_populates="transactions")
+
+    def to_pydantic(self):
+        return TransactionOut(
+            id=self.id,
+            description=self.description,
+            full_sum=self.full_sum,
+            date=self.date,
+            category_id=self.category_id,
+            user_id=self.user_id,
+        )
