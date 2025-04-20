@@ -8,6 +8,7 @@ from aiogram import Bot, Dispatcher
 bot = Bot("7938224331:AAGw75HUIxB9paXt5VWM_F7VpNPiy5KHio4")
 dp = Dispatcher()
 
+
 async def main():
     dp.include_router(router)
     await set_bot_commands(bot)

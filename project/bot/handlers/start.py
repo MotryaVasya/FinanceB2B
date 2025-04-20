@@ -4,10 +4,20 @@ from aiogram.types import Message
 from aiogram.filters import or_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from project.bot.keyboards.reply import start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard,get_all_categories,gety_type_keyboard,Money_keyboard,Afteradd_keyboard
+from project.bot.keyboards.reply import skip_keyboard,start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard,get_all_categories,gety_type_keyboard,Money_keyboard,Afteradd_keyboard
 router = Router()
 waiting_for_category_name = State("waiting_for_category_name")
 waiting_for_category_type = State("waiting_for_category_type")
+
+class Context(StatesGroup):
+    IN_CATEGORIES = State()
+    IN_TRANSACTIONS = State()
+
+class TransactionStates(StatesGroup):
+    waiting_for_category_name = State()
+    waiting_for_transaction_description = State()
+    waiting_for_transaction_amount = State()
+
 help_text=("Привет! 👋 Вот как я могу помочь:\n"
             "💸 Транзакция — добавь доход или расход.\n"
             "📂 Категории — управляй своими категориями.\n"
@@ -72,8 +82,9 @@ async def start_handler(message: Message, state: FSMContext):
 
 @router.message(F.text == "Категории")
 async def categories_handler(message: Message, state: FSMContext):
+    
     try:
-        await state.clear()
+        await state.set_state(Context.IN_CATEGORIES)
         await message.answer(
             cattegory_text,
             reply_markup=await get_categories_keyboard()
@@ -132,7 +143,7 @@ async def categories_handler(message: Message):
 @router.message(or_f(F.text == "Транзакция",F.text=="Перейти к транзакциям"))
 async def transaction_handler(message: Message, state: FSMContext):
     try:
-        await state.clear()
+        await state.set_state(Context.IN_TRANSACTIONS)
         await message.answer(
             "Выберите действие с транзакциями:",
             reply_markup=await get_transaction_keyboard()
@@ -172,6 +183,8 @@ async def cash_handler(message: Message):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
+        
 @router.message(F.text=="Пополнить")
 async def  Add_money_handler(message: Message):
     text=(f"💰 Хотите пополнить баланс?\n 🏦 Перейдите в раздел Транзакции для пополнения! 💳📈\n ")
@@ -182,31 +195,101 @@ async def  Add_money_handler(message: Message):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
+
 @router.message(F.text == "Назад")
 async def back_handler(message: Message, state: FSMContext):
     try:
-        await state.clear()
+        current_state = await state.get_state()
         
-        prev_text = message.reply_to_message.text if message.reply_to_message else ""
-        
-        if "категори" in prev_text.lower():
-            await categories_handler(message)
-        elif "транзакци" in prev_text.lower():
-            await transaction_handler(message)
-        elif "помощь" in prev_text.lower():
-            await help_handler(message)
+        # Если мы в процессе добавления транзакции
+        if current_state == TransactionStates.waiting_for_transaction_amount:
+            await state.set_state(TransactionStates.waiting_for_transaction_description)
+            await message.answer("🔙 Возвращаемся к вводу описания", 
+                               reply_markup=await skip_keyboard())
+            return
+            
+        elif current_state == TransactionStates.waiting_for_transaction_description:
+            await state.set_state(Context.IN_TRANSACTIONS)
+            await message.answer("🔙 Возвращаемся к выбору категории",
+                               reply_markup=await get_transaction_keyboard())
+            return
+            
+        # Если мы в процессе добавления категории
+        elif current_state == waiting_for_category_type:
+            await state.set_state(waiting_for_category_name)
+            await message.answer("🔙 Возвращаемся к вводу названия категории\n"
+                               "Введите название категории:")
+            return
+            
+        # Если мы в разделах категорий или транзакций
+        elif current_state in [Context.IN_CATEGORIES, Context.IN_TRANSACTIONS]:
+            await state.clear()
+            await message.answer(welcome_text,
+                               reply_markup=await start_keyboard())
+            return
+            
+        # Во всех остальных случаях возвращаем в главное меню
         else:
-            await start_handler(message)
+            await state.clear()
+            await message.answer(pre_text,
+                               reply_markup=await start_keyboard())
+            
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
         await state.clear()
-        await start_handler(message)
-
+        await message.answer(
+            "Произошла ошибка, возвращаю в главное меню",
+            reply_markup=await start_keyboard()
+        )
 
 @router.message(F.text == "Добавить")
-async def categories_handler(message: Message, state: FSMContext):
+async def add_handler(message: Message, state: FSMContext):
     try:
-        await message.answer("✏️Введите название вашей категории:")
-        await state.set_state(waiting_for_category_name)
+        current_state = await state.get_state()
+        
+        if current_state == Context.IN_CATEGORIES.state:
+            await message.answer("✏️ Введите название вашей категории:")
+            await state.set_state(waiting_for_category_name)
+            
+        elif current_state == Context.IN_TRANSACTIONS.state:
+            await message.answer("💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
+                                reply_markup=await get_all_categories())
+            
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+        await message.answer("Произошла ошибка, попробуйте ещё раз")
+        await state.clear()
+
+
+@router.message(F.text)
+async def handle_category_selection(message: Message, state: FSMContext):
+    categories = await get_all_categories()
+    category_names = [button.text for row in categories.keyboard for button in row]
+    
+    if message.text in category_names:
+        await state.update_data(selected_category=message.text)
+        keyboard = await skip_keyboard()
+
+        await message.answer(
+            "📝 Введите описание (или пропустите):",
+            reply_markup=keyboard
+        )
+        await state.set_state(TransactionStates.waiting_for_transaction_description)
+    else:
+        pass
+
+@router.message(F.text == "Пропустить", TransactionStates.waiting_for_transaction_description)
+async def handle_skip_description(message: Message, state: FSMContext):
+    
+    await state.update_data(transaction_description=None)
+    await message.answer("🎉 Укажите сумму транзакции:")
+    await state.set_state(TransactionStates.waiting_for_transaction_amount)
+
+
+@router.message(TransactionStates.waiting_for_transaction_description)
+async def handle_description_input(message: Message, state: FSMContext):
+
+    await state.update_data(transaction_description=message.text)
+    await message.answer("🎉 Описание добавлено! Теперь укажите сумму транзакции:")
+    await state.set_state(TransactionStates.waiting_for_transaction_amount)

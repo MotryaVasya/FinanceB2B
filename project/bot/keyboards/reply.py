@@ -1,11 +1,11 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт","Еще"]
+
 async def add_back_button(keyboard: ReplyKeyboardMarkup) -> ReplyKeyboardMarkup:
     new_keyboard = keyboard.keyboard.copy()
     new_keyboard.append([KeyboardButton(text="Назад")])
     return ReplyKeyboardMarkup(keyboard=new_keyboard, resize_keyboard=True)
-
 
 async def start_keyboard() -> ReplyKeyboardMarkup:
     """
@@ -50,6 +50,13 @@ async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
 
+async def skip_keyboard() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    builder.add(KeyboardButton(text="Пропустить")
+    )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
 
 async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     """
@@ -115,7 +122,6 @@ async def gety_type_keyboard() -> ReplyKeyboardMarkup:
         )
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
-
 async def get_all_categories() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для выбора категории.
@@ -137,6 +143,6 @@ async def get_all_categories() -> ReplyKeyboardMarkup:
         KeyboardButton(text=arr[5]),
         KeyboardButton(text=arr[6])
     )
-    builder.adjust(3)  # Первые 2 кнопки в одной строке, остальные переносятся
+    builder.adjust(1)  # Первые 2 кнопки в одной строке, остальные переносятся
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
