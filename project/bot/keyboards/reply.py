@@ -7,6 +7,37 @@ async def add_back_button(keyboard: ReplyKeyboardMarkup) -> ReplyKeyboardMarkup:
     new_keyboard.append([KeyboardButton(text="Назад")])
     return ReplyKeyboardMarkup(keyboard=new_keyboard, resize_keyboard=True)
 
+async def make_edit_keyboard():
+    builder = ReplyKeyboardBuilder()
+    builder.add(KeyboardButton(text="Изменить"))
+    return builder.as_markup(resize_keyboard=True)
+
+
+async def make_skip_keyboard():
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="Пропустить")]],
+        resize_keyboard=True
+    )
+
+
+async def make_type_keyboard():
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+        KeyboardButton(text="Доход"),
+        KeyboardButton(text="Расход"),
+        KeyboardButton(text="Назад"),
+    )
+    builder.add(KeyboardButton(text="Пропустить"))
+    builder.adjust(3, 1)  # 3 кнопки в первом ряду, 1 во втором
+    return builder.as_markup(resize_keyboard=True)
+
+
+async def make_save_keyboard():
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="Сохранить изменения")]],
+        resize_keyboard=True
+    )
+
 async def start_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает основную клавиатуру меню.
@@ -82,7 +113,7 @@ async def Money_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()
     builder.add(
-            KeyboardButton(text="Перейти в меню"),
+            KeyboardButton(text="Пeрейти в меню"),
             KeyboardButton(text="Пополнить"),
         )
     keyboard = builder.as_markup(resize_keyboard=True)

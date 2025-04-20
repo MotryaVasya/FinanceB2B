@@ -14,5 +14,4 @@ async def main():
     await set_bot_commands(bot)
     await dp.start_polling(bot)
     print("bot started...")
-    print("gaw")
 asyncio.run(main())
