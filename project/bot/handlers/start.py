@@ -31,9 +31,10 @@ cattegory_text =(
 "* ❌ Удалить категорию\n"
 "* 👀 Посмотреть существующие категории\n"
 )
-pre_text=("🔙 Возвращаемся в главное меню!\n "
-         "Чем займёмся дальше? 😊\n ")
-
+pre_help=("🔙 Возвращаемся в главное меню!\n"
+"Попробуем добавить первую транзакцию? 😊\n")
+pre_balance=("🔙 Возвращаемся в главное меню!\n"
+"Чем займёмся дальше? 😊\n")
 
 def validate_name(name: str) -> bool:
     """
@@ -41,12 +42,13 @@ def validate_name(name: str) -> bool:
     1. Длина не более 50 символов
     2. Начинается с буквы или цифры
     3. Не содержит специальных символов @#$% и т.п.
+    4. Не состоит только из цифр (должна быть хотя бы одна буква)
     
     :param name: Название для проверки
     :return: True если название валидно, False если нет
     """
     # Проверка длины
-    if len(name) > 50:
+    if len(name) == 0 or len(name) > 50:
         return False
     
     # Проверка первого символа (должен быть буква или цифра)
@@ -54,11 +56,22 @@ def validate_name(name: str) -> bool:
         return False
     
     # Проверка на допустимые символы (только буквы, цифры, пробелы и дефисы/подчёркивания)
+    for char in name:
+        if not (char.isalnum() or char in (' ', '-', '_')):
+            return False
+    
+    # Проверка, что название не состоит только из цифр
+    if all(char.isdigit() for char in name if char.isalnum()):
+        return False
+    
+    # Проверка, что есть хотя бы одна буква (включая случаи с пробелами/разделителями)
+    if not any(char.isalpha() for char in name):
+        return False
     
     return True
 
 
-@router.message(or_f(CommandStart(), Command("restart"), F.text.in_(["Перейти в меню", "Назад"])))
+@router.message(or_f(CommandStart(), Command("restart"), F.text.in_(["Назад"])))
 async def start_handler(message: Message, state: FSMContext):
     try:
         await state.clear()
@@ -85,19 +98,17 @@ async def categories_handler(message: Message, state: FSMContext):
 async def process_category_name(message: Message, state: FSMContext):
     try:
         category_name = message.text.strip()
-        
         if not validate_name(category_name):
             await message.answer(
-                "❌ Некорректное название!\n"
-                "Требования:\n"
-                "- Макс. 50 символов\n"
-                "- Начинается с буквы/цифры\n"
-                "- Без спецсимволов (@, # и др.)\n"
-                "Введите снова:"
+                "😕 Похоже, что-то не так с названием. Попробуйте ещё раз, пожалуйста.\n"
+                "Вот несколько простых правил:\n"
+                "1. Название не должно быть слишком длинным — максимум 50 символов.\n"
+                "2. Оно должно начинаться с буквы или цифры (без специальных символов и пробелов).\n"
+                "3. Не используйте символы типа @, #, $, % и т.п.\n"
             )
             return
         
-        await message.answer(f"🎉 Готово! Ваша категория '{category_name}' добавлена.")
+        await message.answer(f"🎉 Готово! Ваша категория '{category_name}' добавлена.\n Пожалуйста, выберите тип:\n")
         
         await state.set_state(waiting_for_category_type)
         await message.answer("Выберите тип",
@@ -155,12 +166,20 @@ async def help_handler(message: Message):
 async def start_handler_for_help(message: Message):
     try:
         await message.answer(
-            pre_text,
-            reply_markup=start_keyboard()
+            pre_help,
+            reply_markup=await start_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
+@router.message(F.text==("Пeрейти в меню"))
+async def start_handler_for_help(message: Message):
+    try:
+        await message.answer(
+            pre_balance,
+            reply_markup=await start_keyboard()
+        )
+    except Exception as e:
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text=="Баланс")
 async def cash_handler(message: Message):

@@ -1,6 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт","Еще"]
+
 async def add_back_button(keyboard: ReplyKeyboardMarkup) -> ReplyKeyboardMarkup:
     new_keyboard = keyboard.keyboard.copy()
     new_keyboard.append([KeyboardButton(text="Назад")])
@@ -75,7 +76,7 @@ async def Money_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()
     builder.add(
-            KeyboardButton(text="Перейти в меню"),
+            KeyboardButton(text="Пeрейти в меню"),
             KeyboardButton(text="Пополнить"),
         )
     keyboard = builder.as_markup(resize_keyboard=True)
