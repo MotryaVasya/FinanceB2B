@@ -21,6 +21,7 @@ async def main():
     await set_bot_commands(bot)
     
     print("Bot started...")
+    print("gawgwa")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ class TransactionStates(StatesGroup):
 class CategoryStates(StatesGroup):
     waiting_for_category_name = State()
     waiting_for_category_type = State()
+    new_category_name= State()
 
 class Context(StatesGroup):
     IN_CATEGORIES = State()

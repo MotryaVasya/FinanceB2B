@@ -79,43 +79,43 @@ async def back_handler(message: Message, state: FSMContext):
 
 
 
-
-@router.message(F.text == "Добавить")
-async def add_handler(message: Message, state: FSMContext):
-    try:
-        current_state = await state.get_state()
+#TODO разделить логику на 2 метода(транзакции и категории бунтуют)
+# @router.message(F.text == "Добавить")
+# async def add_handler(message: Message, state: FSMContext):
+#     try:
+#         current_state = await state.get_state()
         
-        if current_state == Context.IN_CATEGORIES.state:
-            await message.answer("✏️ Введите название вашей категории:")
-            await state.set_state(CategoryStates.waiting_for_category_name)
+#         if current_state == Context.IN_CATEGORIES.state:
+#             await message.answer("✏️ Введите название вашей категории:")
+#             await state.set_state(CategoryStates.waiting_for_category_name)
             
-        elif current_state == Context.IN_TRANSACTIONS.state:
-            await message.answer("💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
-                                reply_markup=await get_all_categories())
+#         elif current_state == Context.IN_TRANSACTIONS.state:
+#             await message.answer("💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
+#                                 reply_markup=await get_all_categories())
             
-    except Exception as e:
-        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+#     except Exception as e:
+#         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(F.text)
-async def handle_category_selection(message: Message, state: FSMContext):
-    current_state = await state.get_state()
-    categories = await get_all_categories()
-    category_names = [button.text for row in categories.keyboard for button in row]
+# @router.message(F.text)
+# async def handle_category_selection(message: Message, state: FSMContext):
+#     current_state = await state.get_state()
+#     categories = await get_all_categories()
+#     category_names = [button.text for row in categories.keyboard for button in row]
     
-    if message.text in category_names:
-        if current_state == Context.IN_CATEGORIES.state:
-            await message.answer(
-                "📂 Вот список всех категорий! 😊",
-                reply_markup=await get_all_categories()
-            )
-        elif current_state == Context.IN_TRANSACTIONS.state:
-            await state.update_data(selected_category=message.text)
-            keyboard = await skip_keyboard()
+#     if message.text in category_names:
+#         if current_state == Context.IN_CATEGORIES.state:
+#             await message.answer(
+#                 "📂 Вот список всех категорий! 😊",
+#                 reply_markup=await get_all_categories()
+#             )
+#         elif current_state == Context.IN_TRANSACTIONS.state:
+#             await state.update_data(selected_category=message.text)
+#             keyboard = await skip_keyboard()
 
-            await message.answer(
-                "📝 Введите описание (или пропустите):",
-                reply_markup=keyboard
-            )
-            await state.set_state(TransactionStates.waiting_for_transaction_description)
-    else:
-        pass
+#             await message.answer(
+#                 "📝 Введите описание (или пропустите):",
+#                 reply_markup=keyboard
+#             )
+#             await state.set_state(TransactionStates.waiting_for_transaction_description)
+#     else:
+#         pass
