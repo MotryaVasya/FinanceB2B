@@ -52,7 +52,11 @@ async def transaction_handler(message: Message, state: FSMContext):
     try:
         await state.set_state(Context.IN_TRANSACTIONS)
         await message.answer(
-            "Выберите действие с транзакциями:",
+            "💸 Что вы хотите сделать с вашими транзакциями?  Выберите действие:\n"
+            "* ➕ Добавить\n"
+            "* ✏️ Изменить\n"
+            "* 🗑 Удалить\n"
+            "* 📋 Посмотреть список\n",
             reply_markup=await get_transaction_keyboard()
         )
     except Exception as e:
