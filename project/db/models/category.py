@@ -44,7 +44,7 @@ class Category(Base):
     def to_pydantic(self):
         return CategoryOut(
             id=self.id,
-            nameCategory=self.name_category,
+            name_category=self.name_category,
             type=self.type,
             user_id=self.user_id
         )

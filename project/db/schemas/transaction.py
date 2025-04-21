@@ -24,3 +24,4 @@ class TransactionOut(TransactionBase):
 
     class Config:
         model_config = ConfigDict(from_attributes=True)
+

@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 class CategoryBase(BaseModel):
-    nameCategory: str
+    name_category: str
     type: int
     user_id: Optional[int] = None
 
@@ -11,7 +11,7 @@ class CategoryCreate(CategoryBase):
     pass
 
 class CategoryUpdate(BaseModel):
-    nameCategory: Optional[str]
+    name_category: Optional[str]
     type:  Optional[int]
 
 
