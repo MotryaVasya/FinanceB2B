@@ -7,12 +7,11 @@ from project.bot.keyboards.reply import (
 )
 
 router=Router()
-
-@router.message(F.text==("Пeрейти в меню"))
+@router.message(F.text=="Пeрейти в меню")
 async def start_handler_for_help(message: Message):
     try:
         await message.answer(
-            pre_balance,
+            text=pre_balance,
             reply_markup=await start_keyboard()
         )
     except Exception as e:

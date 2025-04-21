@@ -6,15 +6,7 @@ from project.bot.messages.messages import *
 from aiogram.types import KeyboardButton, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import or_f
-from project.bot.keyboards.reply import (
-    get_categories_keyboard,
-    gety_type_keyboard,
-    make_skip_keyboard,
-    make_type_keyboard,
-    make_save_keyboard,
-    get_all_categories,
-    start_keyboard
-)
+from project.bot.keyboards.reply import *
 user_data = {}
 user_categories = ["Еда", "Транспорт", "Развлечения", "Жильё"]
 

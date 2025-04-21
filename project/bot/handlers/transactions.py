@@ -1,19 +1,10 @@
-from aiogram import Router, types, F
+from aiogram import Router, F
 from aiogram.types import Message
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
 from project.bot.states import TransactionStates
-from aiogram.filters import or_f
-from project.bot.keyboards.reply import (
-    get_categories_keyboard,
-    gety_type_keyboard,
-    make_skip_keyboard,
-    make_type_keyboard,
-    make_save_keyboard,
-    get_all_categories,
-    start_keyboard
-)
-
+from project.bot.keyboards.reply import *
+\
 router=Router()
 
 @router.message(F.text == "Пропустить", TransactionStates.waiting_for_transaction_description)

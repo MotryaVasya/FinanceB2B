@@ -5,7 +5,7 @@ from aiogram.types import Message
 from project.bot.messages.messages import *
 from aiogram.filters import or_f
 from aiogram.fsm.context import FSMContext
-from project.bot.keyboards.reply import skip_keyboard, start_keyboard, help_keyboard, get_categories_keyboard, get_transaction_keyboard,get_all_categories,gety_type_keyboard,Money_keyboard,Afteradd_keyboard, make_save_keyboard, make_type_keyboard, make_skip_keyboard
+from project.bot.keyboards.reply import *
 router = Router()
 user_data = {}
 

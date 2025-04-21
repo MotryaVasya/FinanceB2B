@@ -6,9 +6,11 @@ from project.bot.handlers.categories import router as categories_router
 from project.bot.handlers.transactions import router as transactions_router
 from project.bot.handlers.balance import router as balance_router
 from project.bot.keyboards.botCommands import set_bot_commands
+from project.core.config import config
 
-bot = Bot("7938224331:AAGw75HUIxB9paXt5VWM_F7VpNPiy5KHio4")
+bot = Bot(token=config.BOT_TOKEN)
 dp = Dispatcher()
+
 
 async def main():
     dp.include_router(menu_router)
@@ -18,7 +20,6 @@ async def main():
     dp.include_router(transactions_router)
     await set_bot_commands(bot)
     
-    # Запускаем бота
     print("Bot started...")
     await dp.start_polling(bot)
 

@@ -1,5 +1,5 @@
 from importlib.resources import read_text
-from aiogram import Router, types, F
+from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from project.bot.messages.messages import *
 from aiogram.types import Message
@@ -10,7 +10,6 @@ from project.bot.keyboards.reply import (
     Money_keyboard,
     get_categories_keyboard,
     get_transaction_keyboard,
-    gety_type_keyboard,
     help_keyboard,
 )
 router=Router()
@@ -33,6 +32,7 @@ async def cash_handler(message: Message):
             text,
             reply_markup=await Money_keyboard()
         )
+        
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
