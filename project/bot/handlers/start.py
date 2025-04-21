@@ -31,22 +31,11 @@ async def start_handler_for_help(message: Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(F.text=="Пополнить")
-async def  Add_money_handler(message: Message):
-    text=(f"💰 Хотите пополнить баланс?\n 🏦 Перейдите в раздел Транзакции для пополнения! 💳📈\n ")
-    try:
-        await message.answer(
-            text,
-            reply_markup=await Afteradd_keyboard()
-        )
-    except Exception as e:
-        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
 @router.message(F.text == "Назад")
 async def back_handler(message: Message, state: FSMContext):
     try:
         current_state = await state.get_state()
-        
+
         # Если мы в процессе добавления транзакции
         if current_state == TransactionStates.waiting_for_transaction_amount:
             await state.set_state(TransactionStates.waiting_for_transaction_description)
