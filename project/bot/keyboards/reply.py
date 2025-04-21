@@ -1,7 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт","Еще"]
-
+user_categories = ["Еда", "Транспорт", "Развлечения", "Жильё"]
 async def add_back_button(keyboard: ReplyKeyboardMarkup) -> ReplyKeyboardMarkup:
     new_keyboard = keyboard.keyboard.copy()
     new_keyboard.append([KeyboardButton(text="Назад")])
@@ -58,7 +58,12 @@ async def start_keyboard() -> ReplyKeyboardMarkup:
         resize_keyboard=True
     )
 
-
+async def make_categories_keyboard():
+    builder = ReplyKeyboardBuilder()
+    for category in user_categories:
+        builder.add(KeyboardButton(text=category))
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True)
 async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для управления категориями.

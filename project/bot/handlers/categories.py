@@ -1,14 +1,14 @@
 from aiogram import Router, types, F
 from aiogram.types import Message
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from project.bot.states import CategoryStates,Context
+from project.bot.states import *
 from project.bot.messages.messages import *
 from aiogram.types import KeyboardButton, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import or_f,StateFilter
 from project.bot.keyboards.reply import *
 user_data = {}
-user_categories = ["Еда", "Транспорт", "Развлечения", "Жильё"]
+
 
 cattegory_text = (
     "📂 Что вы хотите сделать с категориями?  Выберите действие:\n"
@@ -67,14 +67,8 @@ async def add_handler(message: Message, state: FSMContext):
     try:
         current_state = await state.get_state()
         
-        if current_state == Context.IN_CATEGORIES.state:
-            await message.answer("✏️ Введите название вашей категории:")
-            await state.set_state(CategoryStates.waiting_for_category_name)
-            
-        elif current_state == Context.IN_TRANSACTIONS.state:
-            await message.answer("💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
-                                reply_markup=await get_all_categories())
-            
+        await check_states_add(current_state,message)
+        await state.set_state(CategoryStates.waiting_for_category_name)
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
 @router.message(StateFilter(CategoryStates.waiting_for_category_name))
@@ -113,12 +107,12 @@ async def after_add(message: Message):
         print(f"Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Изменить")
-async def show_categories(message: types.Message):
+async def show_categories(message: types.Message,state: FSMContext):
     try:
-        await message.answer(
-            "🎉 Вот все ваши категории! Какую вы хотите изменить?",
-            reply_markup=await make_categories_keyboard()
-        )
+        current_state = await state.get_state()
+        
+        await check_states_update(current_state,message)
+        
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
@@ -203,9 +197,3 @@ async def skip_type(message: types.Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-async def make_categories_keyboard():
-    builder = ReplyKeyboardBuilder()
-    for category in user_categories:
-        builder.add(KeyboardButton(text=category))
-    builder.adjust(2)
-    return builder.as_markup(resize_keyboard=True)
