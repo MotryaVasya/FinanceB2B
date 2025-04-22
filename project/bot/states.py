@@ -3,6 +3,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from project.bot.keyboards.reply import *
 from aiogram.fsm.context import FSMContext
+user_state_history = {}
+user_data = {}
 class TransactionStates(StatesGroup):
     waiting_for_category_name = State()
     waiting_for_transaction_description = State()

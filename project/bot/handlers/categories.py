@@ -1,22 +1,12 @@
 from aiogram import Router, types, F
 from aiogram.types import Message
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from project.bot.states import *
 from project.bot.messages.messages import *
 from aiogram.types import KeyboardButton, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import or_f,StateFilter
 from project.bot.keyboards.reply import *
-user_data = {}
 
-
-cattegory_text = (
-    "📂 Что вы хотите сделать с категориями?  Выберите действие:\n"
-    "* ➕ Добавить категорию\n"
-    "* 📝 Изменить категорию\n"
-    "* ❌ Удалить категорию\n"
-    "* 👀 Посмотреть существующие категории\n"
-)
 
 def validate_name(name: str) -> bool:
     """
@@ -36,7 +26,7 @@ def validate_name(name: str) -> bool:
         return False
     
     for char in name:
-        if not (char.isalnum() or char in (' ', '-', '_')):
+        if not (char.isalnum() or char in (' ', '-', '_')): 
             return False
     
     if all(char.isdigit() for char in name if char.isalnum()):
@@ -52,16 +42,20 @@ def validate_name(name: str) -> bool:
 router = Router()
 
 
-@router.message(F.text=="Посмотреть список существующих")
+@router.message(F.text == "Посмотреть список существующих")
 async def show_categories_list(message: Message):
+    user_id = message.from_user.id
+    if user_id not in user_state_history:
+        user_state_history[user_id] = []
+    user_state_history[user_id].append("show_categories_list")
     try:
-        print("popka")
         await message.answer(
             "📂 Вот список всех категорий! 😊",
-            reply_markup=await get_all_categories()
+            reply_markup=await add_back_button(await get_all_categories())
         )
     except Exception as e:
-        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+        
 @router.message(F.text == "Добавить")
 async def add_handler(message: Message, state: FSMContext):
     try:

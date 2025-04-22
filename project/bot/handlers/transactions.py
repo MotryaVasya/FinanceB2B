@@ -4,7 +4,6 @@ from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
 from project.bot.states import *
 from project.bot.keyboards.reply import *
-\
 router=Router()
 
 

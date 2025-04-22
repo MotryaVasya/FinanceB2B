@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from project.bot.messages.messages import *
 from aiogram.types import Message
 from aiogram.filters import or_f
-
+from project.bot.states import *
 from project.bot.handlers.start import Context
 from project.bot.keyboards.reply import (
     Money_keyboard,
@@ -26,6 +26,8 @@ async def help_handler(message: Message):
 
 @router.message(F.text=="Баланс")
 async def cash_handler(message: Message):
+    user_id = message.from_user.id
+    user_state_history.update({user_id:"BALANCE"})
     text=(f"💫 Ваш баланс: \nУ тебя всё под контролем! 🧘‍♂️\n ")
     try:
         await message.answer(

@@ -6,11 +6,99 @@ from project.bot.messages.messages import *
 from aiogram.filters import or_f
 from aiogram.fsm.context import FSMContext
 from project.bot.keyboards.reply import *
+from project.bot.states import *
+import logging
 router = Router()
-user_data = {}
 
 
-@router.message(or_f(CommandStart(), Command("restart"), F.text.in_(["Назад"])))
+@router.message(F.text == "Назад")
+async def go_back(message: Message, state: FSMContext):
+    """Обрабатывает нажатие кнопки "Назад", возвращая к предыдущему состоянию."""
+    user_id = message.from_user.id
+    if user_id in user_state_history and len(user_state_history[user_id]) > 1:
+        previous_state = user_state_history[user_id][-1]
+        logging.info(f"Предыдущее состояние после pop: {previous_state}")
+
+        state_actions = {
+            "MENU": (
+                "Вы вернулись в главное меню.",
+                await start_keyboard()
+            ),
+            "BALANCE": (
+                "Вы вернулись в раздел 'Баланс'.",
+                await Money_keyboard()
+            ),
+            "ADD_MONEY": (
+                "Вы вернулись в раздел 'Баланс'.",
+                await Money_keyboard()
+            ),
+            "TRANSACTIONS_MAIN": (
+                "Вы вернулись в раздел 'Транзакции'.",
+                await get_transaction_keyboard()
+            ),
+            "ADD_TRANSACTION": (
+                "Вы вернулись в раздел 'Транзакции'.",
+                await get_transaction_keyboard()
+            ),
+            CategoryStates.waiting_for_category_name.state: (
+                "Введите название категории:",
+                await add_back_button(ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True))
+            ),
+            CategoryStates.waiting_for_category_type.state: (
+                "Выберите тип категории:",
+                await add_back_button(await gety_type_keyboard())
+            ),
+            TransactionStates.waiting_for_category_name.state: (
+                "Выберите категорию транзакции:",
+                await add_back_button(await get_all_categories())
+            ),
+            Context.IN_CATEGORIES.state: (
+                "Действия с категориями:",
+                await add_back_button(await get_categories_keyboard())
+            ),
+            Context.IN_TRANSACTIONS.state: (
+                "Действия с транзакциями:",
+                await add_back_button(await get_transaction_keyboard())
+            ),
+            "handle_text_input": (
+                f"✨ Введите новое название для категории '{user_data.get(user_id, {}).get('current_category', 'неизвестно')}' или пропустите:",
+                await add_back_button(await make_skip_keyboard())
+            ),
+            "skip_name": (
+                "🔄 Хорошо! Давайте изменим тип вашей категории 😊",
+                await add_back_button(await make_type_keyboard())
+            ),
+            "set_type": (
+                "✨ Всё супер! Сохраняем изменения? 😊",
+                await add_back_button(await make_save_keyboard())
+            ),
+            "skip_type": (
+                "✨ Всё супер! Сохраняем изменения? 😊",
+                await add_back_button(await make_save_keyboard())
+            ),
+            "show_categories": (
+                "🎉 Вот все ваши категории! Какую вы хотите изменить?",
+                await add_back_button(await make_categories_keyboard())
+            ),
+            "select_category": (
+                "🎉 Вот все ваши категории! Какую вы хотите изменить?",
+                await add_back_button(await make_categories_keyboard())
+            ),
+            "show_categories_list": (
+                "📂 Вот список всех категорий! 😊",
+                await add_back_button(await get_all_categories())
+            ),
+        }
+
+        if previous_state in state_actions:
+            text, reply_markup = state_actions[previous_state]
+            await message.answer(text, reply_markup=reply_markup)
+        else:
+            await message.answer("Вы вернулись назад.", reply_markup=await start_keyboard())
+    else:
+        await message.answer("Некуда возвращаться.", reply_markup=await start_keyboard())
+    user_state_history.pop(user_id)
+@router.message(or_f(CommandStart(), Command("restart")))
 async def start_handler(message: Message, state: FSMContext):
     try:
         await state.clear()
@@ -31,51 +119,7 @@ async def start_handler_for_help(message: Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(F.text == "Назад")
-async def back_handler(message: Message, state: FSMContext):
-    try:
-        current_state = await state.get_state()
 
-        # Если мы в процессе добавления транзакции
-        if current_state == TransactionStates.waiting_for_transaction_amount:
-            await state.set_state(TransactionStates.waiting_for_transaction_description)
-            await message.answer("🔙 Возвращаемся к вводу описания", 
-                               reply_markup=await skip_keyboard())
-            return
-            
-        elif current_state == TransactionStates.waiting_for_transaction_description:
-            await state.set_state(Context.IN_TRANSACTIONS)
-            await message.answer("🔙 Возвращаемся к выбору категории",
-                               reply_markup=await get_transaction_keyboard())
-            return
-            
-        # Если мы в процессе добавления категории
-        elif current_state == CategoryStates.waiting_for_category_type:
-            await state.set_state(CategoryStates.waiting_for_category_name)
-            await message.answer("🔙 Возвращаемся к вводу названия категории\n"
-                               "Введите название категории:")
-            return
-            
-        # Если мы в разделах категорий или транзакций
-        elif current_state in [Context.IN_CATEGORIES, Context.IN_TRANSACTIONS]:
-            await state.clear()
-            await message.answer(welcome_text,
-                               reply_markup=await start_keyboard())
-            return
-            
-
-        else:
-            await state.clear()
-            await message.answer(reply_markup=await start_keyboard())
-            await message.answer("Произошла ошибка, попробуйте ещё раз")
-        await state.clear()
-    except Exception as e:
-        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-        await state.clear()
-        await message.answer(
-            "Произошла ошибка, возвращаю в главное меню",
-            reply_markup=await start_keyboard()
-        )
 
 
 
