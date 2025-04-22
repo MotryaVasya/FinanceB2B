@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.future import select
-from models.category import Base, Category
+from project.db.models.category import Base, Category
 from sqlalchemy.exc import SQLAlchemyError
 import asyncio
 from project.core.config import config

@@ -3,9 +3,9 @@ from sqlalchemy import CheckConstraint, Integer, String, Numeric, DateTime, Fore
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional
 
-from schemas.category import CategoryOut
-from schemas.transaction import TransactionOut
-from schemas.user import UserOut
+from project.db.schemas.category import CategoryOut
+from project.db.schemas.transaction import TransactionOut
+from project.db.schemas.user import UserOut
 from sqlalchemy.sql import text
 
 class Base(DeclarativeBase):
