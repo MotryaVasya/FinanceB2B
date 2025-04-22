@@ -1,11 +1,12 @@
 from datetime import datetime
-from sqlalchemy import Integer, String, Numeric, DateTime, ForeignKey
+from sqlalchemy import CheckConstraint, Integer, String, Numeric, DateTime, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional
 
-from project.db.schemas.category import CategoryOut
-from project.db.schemas.transaction import TransactionOut
-from project.db.schemas.user import UserOut
+from schemas.category import CategoryOut
+from schemas.transaction import TransactionOut
+from schemas.user import UserOut
+from sqlalchemy.sql import text
 
 class Base(DeclarativeBase):
     pass
@@ -32,6 +33,31 @@ class User(Base):
 
 class Category(Base):
     __tablename__ = "category"
+    __table_args__ = (
+        CheckConstraint(
+            text("""
+                (user_id IS NULL AND name_category IN (
+                    'Зарплата', 'Продукты', 'Кафе', 
+                    'Досуг', 'Здоровье', 'Транспорт'
+                )) 
+                OR 
+                (user_id IS NOT NULL)
+            """),
+            name="system_categories_check"
+        ),
+        CheckConstraint(
+            text("""
+                NOT (
+                    user_id IS NULL 
+                    AND name_category NOT IN (
+                        'Зарплата', 'Продукты', 'Кафе', 
+                        'Досуг', 'Здоровье', 'Транспорт'
+                    )
+                )
+            """),
+            name="only_six_system_categories"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name_category: Mapped[str] = mapped_column(String, nullable=False)
@@ -50,7 +76,7 @@ class Category(Base):
         )
 
 class Transaction(Base):
-    __tablename__ = "transaction"
+    __tablename__ = '"transaction"'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     full_sum: Mapped[float] = mapped_column(Numeric, nullable=False)
