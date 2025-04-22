@@ -5,8 +5,9 @@ from sqlalchemy.future import select
 from project.db.models.category import Base, Category
 from sqlalchemy.exc import SQLAlchemyError
 import asyncio
+from project.core.config import config
 
-async_engine = create_async_engine("sqlite+aiosqlite:///finance.db", echo=True)
+async_engine = create_async_engine(config.database_url, echo=True)
 
 AsyncSessionLocal = sessionmaker(
     async_engine,
@@ -51,9 +52,6 @@ async def add_initial_finanse_database():
         await session.rollback()
 
 
-if __name__ == "__main__":
-    async def main():
-        await init_db()
-        await add_initial_finanse_database()
-
-    asyncio.run(main())
+async def init_db_on_start_up():
+    await init_db()
+    await add_initial_finanse_database()

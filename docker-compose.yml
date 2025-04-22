@@ -12,6 +12,5 @@ services:
     volumes:
       - botdb-data:/var/lib/postgresql/data
 
-
 volumes:
   botdb-data:
