@@ -1,0 +1,17 @@
+version: "3.9"
+
+x-env: &env   
+    env_file:
+      - ${ENV_FILE:-.env}
+services:
+  db:  
+    <<: [*env]
+    image: postgres:17.4-alpine
+    ports:
+      - "5431:5432"
+    volumes:
+      - botdb-data:/var/lib/postgresql/data
+
+
+volumes:
+  botdb-data:
