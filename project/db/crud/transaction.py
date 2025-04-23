@@ -43,12 +43,31 @@ from datetime import datetime
 import json
 import logging
 
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
 from project.db.models.category import Transaction # TODO потом поменять импорт из category
 from project.db.schemas.transaction import TransactionCreate, TransactionUpdate
+
+async def parse_naive_datetime(date_input: str | datetime) -> datetime:
+    """
+    Преобразует строку или datetime в naive datetime (без таймзоны).
+    Бросает HTTPException при ошибке парсинга или наличии tzinfo.
+    """
+    if isinstance(date_input, str):
+        try:
+            date_input = datetime.fromisoformat(date_input)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Неверный формат даты. Используй ISO 8601, например: '2025-04-23T14:30:00'"
+            )
+    if date_input.tzinfo is not None:
+        date_input = date_input.replace(tzinfo=None)
+    return date_input
+
 
 async def create_transaction(session: AsyncSession, data: TransactionCreate) -> Transaction | None:
     """
@@ -62,12 +81,30 @@ async def create_transaction(session: AsyncSession, data: TransactionCreate) -> 
         Transaction: Созданный объект транзакции или None при ошибке.
     """
     try:
-        transaction = Transaction(**data.model_dump())
+        parsed_date = await parse_naive_datetime(data.date)
+
+        transaction = Transaction(
+            description=data.description,
+            full_sum=data.full_sum,
+            date=parsed_date,
+            category_id=data.category_id,
+            user_id=data.user_id
+        )
+
         session.add(transaction)
         await session.commit()
         await session.refresh(transaction)
-        return transaction.to_pydantic()
-    except (ValueError, DataError, ProgrammingError) as e:
+
+        result = transaction.to_pydantic()
+        if result is None:
+            raise ValueError("Failed to convert transaction to Pydantic model")
+            
+        return result
+    except ValueError as e:
+        await session.rollback()
+        raise HTTPException(status_code=400, detail="Неверный формат даты. Используй ISO формат: YYYY-MM-DDTHH:MM:SS")
+
+    except (DataError, ProgrammingError) as e:
         await session.rollback()
         logging.error(json.dumps({
             "message": "Ошибка создания транзакции",
@@ -145,32 +182,26 @@ async def get_all_transactions(session: AsyncSession, skip: int = 0, limit: int 
         return []
         
 async def update_transaction(session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
-    """
-    Обновляет данные транзакции.
-
-    Args:
-        session (AsyncSession): Асинхронная сессия для работы с БД.
-        transaction_id (int): Идентификатор транзакции для обновления.
-        data (TransactionUpdate): Данные для обновления.
-
-    Returns:
-        Transaction: Обновленный объект транзакции или None, если транзакция не найдена.
-    """
     if transaction_id <= 0:
         return None
     try:
-        transaction = await get_transaction(session, transaction_id, False)
+        transaction = await get_transaction(session, transaction_id, as_pydantic=False)
         if not transaction:
             return None
-        
-        for key, value in data.model_dump(exclude_unset=True).items():
+
+        updates = data.model_dump(exclude_unset=True)
+
+        if "date" in updates:
+           updates['date'] = await parse_naive_datetime(updates["date"])
+
+        for key, value in updates.items():
             setattr(transaction, key, value)
-        
+
         await session.commit()
         await session.refresh(transaction)
         return transaction.to_pydantic()
 
-    except (InvalidRequestError, AttributeError) as e:
+    except (InvalidRequestError, AttributeError, TypeError) as e:
         await session.rollback()
         logging.error(json.dumps({
             "message": "Ошибка обновления транзакции",
@@ -179,7 +210,11 @@ async def update_transaction(session: AsyncSession, transaction_id: int, data: T
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при обновлении транзакции"
+        )
+
 
 async def delete_transaction(session: AsyncSession, transaction_id: int) -> bool:
     """
@@ -211,4 +246,3 @@ async def delete_transaction(session: AsyncSession, transaction_id: int) -> bool
         }))
         return False
 
-# TODO сделать логи через loguru 
