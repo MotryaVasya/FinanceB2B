@@ -1,4 +1,5 @@
 from datetime import datetime
+from venv import logger
 from sqlalchemy import CheckConstraint, Integer, String, Numeric, DateTime, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional
@@ -87,12 +88,12 @@ class Transaction(Base):
     category: Mapped["Category"] = relationship(back_populates="transactions")
     user: Mapped["User"] = relationship(back_populates="transactions")
 
-    def to_pydantic(self):
+    def to_pydantic(self) -> TransactionOut:
         return TransactionOut(
             id=self.id,
             description=self.description,
-            full_sum=self.full_sum,
-            date=self.date,
+            full_sum=float(self.full_sum),
+            date=self.date,  
             category_id=self.category_id,
-            user_id=self.user_id,
+            user_id=self.user_id
         )

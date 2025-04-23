@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
 from typing import Optional
 
@@ -22,6 +22,17 @@ class TransactionOut(TransactionBase):
     id: int
     date: datetime
 
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda v: v.isoformat()  # Сериализация в ISO формат
+        }
+    )
+
+    @field_validator('date')
+    @classmethod
+    def ensure_naive_datetime(cls, v: datetime) -> datetime:
+        if v.tzinfo is not None:
+            raise ValueError("Timezone-aware datetime not allowed")
+        return v
 
