@@ -14,6 +14,7 @@ services:
 
   bot:
     <<: [*env]
+    entrypoint: sh -c "alembic upgrade head || true && uvicorn main:app --host 0.0.0.0"
     build: .
     ports:
       - "80:8000"
