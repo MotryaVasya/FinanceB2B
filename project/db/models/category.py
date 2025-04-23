@@ -76,7 +76,7 @@ class Category(Base):
         )
 
 class Transaction(Base):
-    __tablename__ = '"transaction"'
+    __tablename__ = "transit"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     full_sum: Mapped[float] = mapped_column(Numeric, nullable=False)
@@ -84,7 +84,6 @@ class Transaction(Base):
     description: Mapped[str] = mapped_column(String, nullable=False)
     category_id: Mapped[int] = mapped_column(ForeignKey("category.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-
     category: Mapped["Category"] = relationship(back_populates="transactions")
     user: Mapped["User"] = relationship(back_populates="transactions")
 
