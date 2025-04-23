@@ -1,15 +1,22 @@
-FROM python:3.10-slim-buster
+# FROM python:3.12-slim
+
+# WORKDIR /app
+
+# COPY requirements.txt .
+
+# RUN pip install --no-cache-dir -r requirements.txt
+
+# COPY . .
+
+# RUN chmod +x /app/entrypoint.sh
+
+# ENTRYPOINT [ "/app/entrypoint.sh" ]
+FROM python:3.12-alpine
 
 WORKDIR /app
+COPY requirements.txt /app
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-COPY requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-RUN alembic upgrade head
-
-EXPOSE 8000
-
-CMD ["uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"]
+COPY . /app
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]

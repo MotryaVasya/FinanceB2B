@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str 
     POSTGRES_HOST: str 
     POSTGRES_PORT: int = 5431
-    DEBUG: bool = True
+    DEBUG: bool = False
+    ECHO: bool = False
     class Config:
         env_file = ".env"
 

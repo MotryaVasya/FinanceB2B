@@ -12,5 +12,12 @@ services:
     volumes:
       - botdb-data:/var/lib/postgresql/data
 
+  bot:
+    <<: [*env]
+    build: .
+    ports:
+      - "80:8000"
+    depends_on:
+      - db
 volumes:
   botdb-data:

@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import asyncio
 from project.core.config import config
 
-async_engine = create_async_engine(config.database_url, echo=True)
+async_engine = create_async_engine(config.database_url, echo=config.ECHO)
 
 AsyncSessionLocal = sessionmaker(
     async_engine,
