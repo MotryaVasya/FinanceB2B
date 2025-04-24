@@ -6,8 +6,7 @@ from aiogram.types import KeyboardButton, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import or_f,StateFilter
 from project.bot.keyboards.reply import *
-
-
+from project.bot.Save import save
 def validate_name(name: str) -> bool:
     """
     Проверяет название по заданным правилам:
@@ -45,6 +44,7 @@ router = Router()
 @router.message(F.text == "Посмотреть список существующих")
 async def show_categories_list(message: Message):
     user_id = message.from_user.id
+    open("show_categories.txt", "w").write(str(await save.update(user_id, "SHOW_CATEGORIES")))
     if user_id not in user_state_history:
         user_state_history[user_id] = []
     user_state_history[user_id].append("show_categories_list")
@@ -58,39 +58,19 @@ async def show_categories_list(message: Message):
         
 @router.message(F.text == "Добавить")
 async def add_handler(message: Message, state: FSMContext):
-    try:
-        current_state = await state.get_state()
-        
-        await check_states_add(current_state,message)
-        await state.set_state(CategoryStates.waiting_for_category_name)
-    except Exception as e:
-        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
-@router.message(StateFilter(CategoryStates.waiting_for_category_name))
-async def process_category_name(message: Message, state: FSMContext):
-    try:
-        category_name = message.text.strip()
-        if not validate_name(category_name):
-            await message.answer(
-                "😕 Похоже, что-то не так с названием. Попробуйте ещё раз, пожалуйста.\n"
-                "Вот несколько простых правил:\n"
-                "1. Название не должно быть слишком длинным — максимум 50 символов.\n"
-                "2. Оно должно начинаться с буквы или цифры (без специальных символов и пробелов).\n"
-                "3. Не используйте символы типа @, #, $, % и т.п.\n"
-            )
-            return
-        
-        await state.set_state(CategoryStates.waiting_for_category_type)
-        await message.answer(
-            text=f"🎉 Готово! Ваша категория '{category_name}' добавлена.\n Пожалуйста, выберите тип:\n",
-            reply_markup=await gety_type_keyboard()
-        )
-    except Exception as e:
-        await message.answer("⚠️ Произошла ошибка, попробуйте позже")
-        print(f"Ошибка: {e.__class__.__name__}: {e}")
+    """Обработчик для кнопки "Добавить"."""
+    user_id = message.from_user.id
+    await save.update(user_id, "ADD_CATEGORY")
+    open("add_handler.txt", "w").write(str(await save.get(user_id)))
+    open("main44.txt", "w").write(str(await save.convert_to_json()))
+    await state.set_state(Context.IN_CATEGORIES)
+    await message.answer("✏️ Введите название вашей категории:")
+
 
 @router.message(or_f(F.text == "Доход", F.text == "Расход"))
 async def after_add(message: Message):
-    #TODO сделать обращение к api
+    user_id = message.from_user.id
+    open("after_add.txt", "w").write(str(await save.update(user_id, "AFTER_ADD")))
     try:
         await message.answer(
             "🎉 Отлично! Я сохранил вашу категорию 😊"
@@ -101,20 +81,21 @@ async def after_add(message: Message):
         print(f"Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Изменить")
-async def show_categories(message: types.Message,state: FSMContext):
+async def show_categories(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    open("edit_handler.txt", "w").write(str(await save.update(user_id, "EDIT_CATEGORY")))
     try:
         current_state = await state.get_state()
-        
-        await check_states_update(current_state,message)
-        
+        await (current_state, message)
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text.in_(user_categories))
 async def select_category(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    open("select_category.txt", "w").write(str(await save.update(user_id, "EDIT_SELECT_CATEGORY")))
     try:    
-        user_data[message.from_user.id] = {"current_category": message.text}
-        
+        user_data[user_id] = {"current_category": message.text}
         await message.answer(
             f"✨ Введите новое название для категории '{message.text}' или пропустите:",
             reply_markup=await make_skip_keyboard()
@@ -136,7 +117,7 @@ async def handle_text_input(message: types.Message):
                 reply_markup=await make_type_keyboard()
             )
         except Exception as e:
-            print(f"⚠ Ошибка: {e.__class__.__name__}: {e}") 
+            print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Сохранить изменения")
 async def save_changes(message: types.Message):
@@ -151,15 +132,16 @@ async def save_changes(message: types.Message):
                 "🔙 Возвращаемся в главное меню!",
                 reply_markup=ReplyKeyboardRemove()
             )
+            user_data.pop(user_id)
         except Exception as e:
-            print(f"⚠ Ошибка: {e.__class__.__name__}: {e}") 
-        user_data.pop(user_id)
+            print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
     else:
         await message.answer("Нечего сохранять", reply_markup=ReplyKeyboardRemove())
 
 @router.message(F.text == "Пропустить")
 async def skip_name(message: types.Message):
-    if not user_data.get(message.from_user.id):
+    user_id = message.from_user.id
+    if not user_data.get(user_id):
         return await message.answer("Ошибка: категория не выбрана")
     try:
         await message.answer(
@@ -167,22 +149,13 @@ async def skip_name(message: types.Message):
             reply_markup=await make_type_keyboard()
         )
     except Exception as e:
-        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}") 
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text.in_(["Доход", "Расход"]))
 async def set_type(message: types.Message):
-    if message.from_user.id in user_data:
-        user_data[message.from_user.id]["type"] = message.text.lower()
-    try:
-        await message.answer(
-            "✨ Всё супер! Сохраняем изменения? 😊",
-            reply_markup=await make_save_keyboard()
-        )
-    except Exception as e:
-        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}") 
-
-@router.message(F.text == "Пропустить")
-async def skip_type(message: types.Message):
+    user_id = message.from_user.id
+    if user_id in user_data:
+        user_data[user_id]["type"] = message.text.lower()
     try:
         await message.answer(
             "✨ Всё супер! Сохраняем изменения? 😊",
@@ -191,3 +164,48 @@ async def skip_type(message: types.Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
+@router.message(F.text == "Пропустить")
+async def skip_type(message: types.Message):
+    user_id = message.from_user.id
+    open("skip_type.txt", "w").write(str(await save.update(user_id, "SKIP_TYPE")))
+    try:
+        await message.answer(
+            "✨ Всё супер! Сохраняем изменения? 😊",
+            reply_markup=await make_save_keyboard()
+        )
+    except Exception as e:
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
+@router.message(StateFilter(CategoryStates.waiting_for_category_name))
+async def process_category_name(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    try:
+        category_name = message.text.strip()
+        if not validate_name(category_name):
+            await message.answer(
+                "😕 Похоже, что-то не так с названием. Попробуйте ещё раз, пожалуйста.\n"
+                "Вот несколько простых правил:\n"
+                "1. Название не должно быть слишком длинным — максимум 50 символов.\n"
+                "2. Оно должно начинаться с буквы или цифры.\n"
+                "3. Не используйте специальные символы.\n"
+            )
+            return
+        
+        await state.set_state(CategoryStates.waiting_for_category_type)
+        await save.update(user_id, "PROCESS_CATEGORY_TYPE")
+        await message.answer(
+            text=f"🎉 Готово! Ваша категория '{category_name}' добавлена.\nПожалуйста, выберите тип:\n",
+            reply_markup=await gety_type_keyboard()
+        )
+    except Exception as e:
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
+
+async def handle_update_in_categories(state: FSMContext, message: Message):
+    """Обработчик для состояния Context.IN_CATEGORIES при обновлении."""
+    current_state = await state.get_state()
+    if current_state == Context.IN_CATEGORIES:
+        await message.answer(
+            "🎉 Вот все ваши категории! Какую вы хотите изменить?",
+            reply_markup=await make_categories_keyboard()
+        )
