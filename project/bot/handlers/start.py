@@ -48,6 +48,10 @@ async def go_back(message: Message, state: FSMContext):
                 "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
                 await start_keyboard()
             ),
+             "DELETE_CATEGORY": (
+                 "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
+                await start_keyboard()
+            ),
              "ZAGLUSHKA": (
                  "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
                 await start_keyboard()
@@ -61,8 +65,8 @@ async def go_back(message: Message, state: FSMContext):
                 await start_keyboard()
             ),
             "EDIT_CATEGORY": (
-                cattegory_text,
-                await add_back_button(await get_categories_keyboard())
+                "🎉 Вот все ваши записи! Какую вы хотите изменить?",
+                await add_back_button(await get_all_categories())
             ),
             "SHOW_CATEGORIES": (    
                 cattegory_text,
@@ -83,6 +87,10 @@ async def go_back(message: Message, state: FSMContext):
             "SKIP_TRANSACTIONS": (
                 trasaction_actions,
                 await add_back_button(await get_transaction_keyboard())
+            ),
+            "AFTER_ADD": (
+                cattegory_text,
+                await add_back_button(await get_categories_keyboard())
             ),
             "NOT_SKIP_TRANSACTIONS": (
                 trasaction_actions,

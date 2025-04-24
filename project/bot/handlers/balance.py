@@ -23,7 +23,7 @@ async def Add_money_handler(message: Message):
     user_id = message.from_user.id  
     open("popolnit.txt","w").write(str(await save.update(user_id, "ADD_MONEY")))
     open("main44.txt","w").write(str(await save.convert_to_json()))
-    text = (f"💰 Хотите пополнить баланс?\n 🏦 Перейдите в раздел Транзакции для пополнения! 💳📈\n ")
+    text = ('💰 Хотите пополнить баланс?\n🏦 Перейдите в раздел "Мои записи" для пополнения! 💳📈\n ')
     try:
         await message.answer(
             text,

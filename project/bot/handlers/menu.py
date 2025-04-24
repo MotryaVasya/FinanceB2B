@@ -31,7 +31,7 @@ async def help_handler(message: Message):
 @router.message(F.text == "Баланс")
 async def cash_handler(message: Message):
     user_id = message.from_user.id
-    text = f"💫 Ваш баланс: \nУ тебя всё под контролем! 🧘‍♂️\n"
+    text = "💫 Ваш баланс: {В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜} \nУ тебя всё под контролем! 🧘‍♂️\n"
     open("balance.txt", "w").write(str(await save.update(user_id, "BALANCE")))
     open("main44.txt", "w").write(str(await save.convert_to_json()))
     try:

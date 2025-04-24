@@ -45,6 +45,8 @@ router = Router()
 async def skip_name(message: types.Message, state: FSMContext):
     await state.set_state(CategoryStates.waiting_for_delete_category)
     try:
+        user_id = message.from_user.id
+        open("show_categories.txt", "w").write(str(await save.update(user_id, "DELETE_CATEGORY")))
         await message.answer(
             "🙂 Вот список ваших категорий! Какую из них хотите удалить?\n",
             reply_markup=await delete_keyboard()
@@ -177,7 +179,7 @@ async def show_categories(message: types.Message, state: FSMContext):
     open("main44.txt", "w").write(str(await save.update(user_id, "EDIT_CATEGORY")))
     try:
             current_state = await state.get_state()
-            if current_state == Context.IN_CATEGORIES:
+            if current_state == CategoryStates.in_categorie:
                 await message.answer(
             "🎉 Вот все ваши категории! Какую вы хотите изменить?",
             reply_markup=await make_categories_keyboard()
@@ -230,7 +232,7 @@ async def handle_text_input(message: types.Message, state: FSMContext):
             print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 
-@router.message(F.text.in_(["Доход", "Расход","Прoпустить"]))
+@router.message(F.text.in_(["Доход", "Расход","Пропyстить"]))
 async def set_type(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_data:
@@ -250,7 +252,7 @@ async def save_changes(message: types.Message):
     if user_id in user_data:
         try:
             await message.answer(
-                "🎉 Отлично! Я изменил вашу категорию!\n"
+                "🎉 Отлично! Я сохранил ваши изменения😊\n"
                 "🔙 Возвращаемся в главное меню!\n",
                 reply_markup=await start_keyboard()
             )

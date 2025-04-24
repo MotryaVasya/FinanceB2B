@@ -29,7 +29,7 @@ async def make_type_keyboard():
         KeyboardButton(text="Доход"),
         KeyboardButton(text="Расход"),
     )
-    builder.add(KeyboardButton(text="Пропустить"))
+    builder.add(KeyboardButton(text="Пропyстить"))
     builder.adjust(3, 1)
 
     return builder.as_markup(resize_keyboard=True)
@@ -66,7 +66,10 @@ async def make_categories_keyboard():
     for category in user_categories:
         builder.add(KeyboardButton(text=category))
     builder.adjust(2)
-    return builder.as_markup(resize_keyboard=True)
+    keyboard=builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
+
+
 async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для управления категориями.
@@ -161,7 +164,8 @@ async def gety_type_keyboard() -> ReplyKeyboardMarkup:
             KeyboardButton(text="Доход"), KeyboardButton(text="Расход"),
         )
     keyboard = builder.as_markup(resize_keyboard=True)
-    return await keyboard
+    return await add_back_button(keyboard)  
+
 async def get_all_categories() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для выбора категории.
@@ -213,7 +217,7 @@ async def delete_keyboard() -> ReplyKeyboardMarkup:
         KeyboardButton(text="Назад")
     builder.adjust(1)
     keyboard = builder.as_markup(resize_keyboard=True)
-    return keyboard
+    return await add_back_button(keyboard)
 
 async def delete_keyboard_affter() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
