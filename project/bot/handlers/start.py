@@ -48,6 +48,10 @@ async def go_back(message: Message, state: FSMContext):
                 "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
                 await start_keyboard()
             ),
+             "ZAGLUSHKA": (
+                 "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
+                await start_keyboard()
+            ),
             "ADD_CATEGORY": (
                 cattegory_text,
                 await get_categories_keyboard()
