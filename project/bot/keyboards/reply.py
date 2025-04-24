@@ -1,7 +1,10 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
+arr_categoryes = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
+arr_transactions=[]
 user_categories = ["Еда", "Транспорт", "Развлечения", "Жильё"]
+
 async def add_back_button(keyboard: ReplyKeyboardMarkup):
     buttons = [row[:] for row in keyboard.keyboard]
     buttons.append([KeyboardButton(text="Назад")])
@@ -26,8 +29,9 @@ async def make_type_keyboard():
         KeyboardButton(text="Доход"),
         KeyboardButton(text="Расход"),
     )
-    builder.add(KeyboardButton(text="Прoпустить"))
-    builder.adjust(3, 1)  # 3 кнопки в первом ряду, 1 во втором
+    builder.add(KeyboardButton(text="Пропустить"))
+    builder.adjust(3, 1)
+
     return builder.as_markup(resize_keyboard=True)
 
 
@@ -105,9 +109,10 @@ async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     """
     builder = ReplyKeyboardBuilder()
     builder.add(
-        KeyboardButton(text="Добавить"),
-        KeyboardButton(text="Удалить"),
+        KeyboardButton(text="Добaвить"),
         KeyboardButton(text="Изменить"),
+        KeyboardButton(text="Удалить"),
+        KeyboardButton(text="Посмотреть список записей")
     )
     builder.adjust(3)
     keyboard = builder.as_markup(resize_keyboard=True)
@@ -156,7 +161,7 @@ async def gety_type_keyboard() -> ReplyKeyboardMarkup:
             KeyboardButton(text="Доход"), KeyboardButton(text="Расход"),
         )
     keyboard = builder.as_markup(resize_keyboard=True)
-    return await add_back_button(keyboard)
+    return await keyboard
 async def get_all_categories() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для выбора категории.
@@ -169,6 +174,7 @@ async def get_all_categories() -> ReplyKeyboardMarkup:
         ReplyKeyboardMarkup: Клавиатура для работы с категориями.
     """
     builder = ReplyKeyboardBuilder()
+
     for name in arr:
         builder.add(
             KeyboardButton(text=name)

@@ -110,6 +110,7 @@ async def show_categories_list(message: Message):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
 @router.message(F.text=="Еще")
 async def show_temp_categories_list(message: Message):
     user_id = message.from_user.id
@@ -124,9 +125,9 @@ async def show_temp_categories_list(message: Message):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+        
 @router.message(F.text == "Добавить")
 async def add_handler(message: Message, state: FSMContext):
-    """Обработчик для кнопки "Добавить"."""
     user_id = message.from_user.id
     open("main44.txt", "w").write(str(await save.update(user_id, "ADD_CATEGORY")))
     await state.set_state(CategoryStates.waiting_for_category_name)
@@ -295,4 +296,12 @@ async def process_category_name(message: Message, state: FSMContext):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-    
+@router.message(F.text=="Статистика")
+async def zaglushka(message:types.Message):
+    user_id = message.from_user.id
+    try:
+        open("add_handler.txt", "w").write(str(await save.update(user_id, "ZAGLUSHKA")))
+        await message.answer("В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜")
+    except Exception as e:
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+

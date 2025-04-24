@@ -1,4 +1,5 @@
 from aiogram import Router, F
+from aiogram.filters import or_f,StateFilter
 from aiogram.types import Message, CallbackQuery
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
@@ -7,21 +8,15 @@ from project.bot.keyboards.reply import *
 from project.bot.Save import save
 router=Router()
 
-#TODO доделать добавление, удаление, обновление
-@router.message(F.text == "Добавить")
-async def add_handler(message: Message, state: FSMContext):
+@router.message(or_f(F.text == "Добaвить"))
+async def add_transaction_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
-    open("add_handler.txt", "w").write(str(await save.update(user_id, "ADD_TRANSACTION")))
-    open("main44.txt", "w").write(str(await save.convert_to_json()))
     try:
-            current_state = await state.get_state()
-            if current_state == Context.IN_TRANSACTIONS:
-                await message.answer(
-        "💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
-        reply_markup=await get_all_categories()
-        )
+        open("add_handler.txt", "w").write(str(await save.update(user_id, "ADD_TRANSACTION")))
+        open("main44.txt", "w").write(str(await save.convert_to_json()))
+        await message.answer("В скорых обновлениях")
     except Exception as e:
-        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Пропустить", TransactionStates.waiting_for_transaction_description)
 async def handle_skip_description(message: Message, state: FSMContext):
@@ -33,6 +28,15 @@ async def handle_skip_description(message: Message, state: FSMContext):
         await state.set_state(TransactionStates.waiting_for_transaction_amount)
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+
+#@router.message(F.text == "Посмотреть список записей")
+#async def show_transactions_list(message:Message, state:FSMContext):
+#    user_id=Message.from_user.id
+#    await save.update(user_id,"LIST_TRANSACTIONS")
+#    try:
+#        await
+#    except Exception as e:
+#        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(TransactionStates.waiting_for_transaction_description)
 async def handle_description_input(message: Message, state: FSMContext):
