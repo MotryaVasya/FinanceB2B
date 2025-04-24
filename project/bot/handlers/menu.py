@@ -48,7 +48,7 @@ async def categories_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
     open("categories.txt", "w").write(str(await save.update(user_id, "MAIN_CATEGORY")))
     try:
-        await state.set_state(Context.IN_CATEGORIES)
+        await state.set_state(CategoryStates.in_categorie)
         await message.answer(
             cattegory_text,
             reply_markup=await get_categories_keyboard()
@@ -61,10 +61,10 @@ async def transaction_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
     open("main44.txt", "w").write(str(await save.update(user_id, "MAIN_TRANSACTIONS")))
     try:
-        await state.set_state(Context.IN_TRANSACTIONS)
-        await message.answer(
-            text=trasaction_actions,
-            reply_markup=await get_transaction_keyboard()
-        )
+        # await state.set_state(TransactionStates.in_transactions)
+        # await message.answer(
+        #     text=trasaction_actions,
+        #     reply_markup=await get_transaction_keyboard()
+        await message.answer("В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜")
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")

@@ -28,7 +28,8 @@ async def go_back(message: Message, state: FSMContext):
                 await start_keyboard()
             ),
             "BALANCE": (
-                "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
+                "🔙 Возвращаемся в главное меню!\n\
+                Попробуем добавить первую запись? 😊",
                 await start_keyboard()
             ),
             "ADD_MONEY": (
@@ -51,13 +52,17 @@ async def go_back(message: Message, state: FSMContext):
                 cattegory_text,
                 await get_categories_keyboard()
             ),
+            "SHOW_TRANSACTIONS": (
+                "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
+                await start_keyboard()
+            ),
             "EDIT_CATEGORY": (
                 cattegory_text,
                 await add_back_button(await get_categories_keyboard())
             ),
-            "SHOW_CATEGORIES": (
+            "SHOW_CATEGORIES": (    
                 cattegory_text,
-                await add_back_button(await get_categories_keyboard())
+                await get_categories_keyboard()
             ),
             "AFTER_ADD": (
                 cattegory_text,
@@ -69,7 +74,7 @@ async def go_back(message: Message, state: FSMContext):
             ),
             "ADD_TRANSACTION": (
                 trasaction_actions,
-                await add_back_button(await get_transaction_keyboard())
+                await get_transaction_keyboard()
             ),
             "SKIP_TRANSACTIONS": (
                 trasaction_actions,
@@ -106,14 +111,4 @@ async def start_handler(message: Message, state: FSMContext):
             reply_markup=await start_keyboard()
         )
     except Exception as e:  
-        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
-@router.message(F.text==("Перейти в меню"))
-async def start_handler_for_help(message: Message):
-    try:
-        await message.answer(
-            pre_help,
-            reply_markup=await start_keyboard()
-        )
-    except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")

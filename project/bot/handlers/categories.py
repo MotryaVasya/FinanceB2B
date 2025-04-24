@@ -51,17 +51,15 @@ async def show_categories_list(message: Message):
     try:
         await message.answer(
             "📂 Вот список всех категорий! 😊",
-            reply_markup=await add_back_button(await get_all_categories())
+            reply_markup=await get_all_categories()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
         
 @router.message(F.text == "Добавить")
 async def add_handler(message: Message, state: FSMContext):
-    """Обработчик для кнопки "Добавить"."""
     user_id = message.from_user.id
     open("main44.txt", "w").write(str(await save.update(user_id, "ADD_CATEGORY")))
-    await state.set_state(Context.IN_CATEGORIES)
     await message.answer("✏️ Введите название вашей категории:")
 
 @router.message(or_f(F.text == "Доход", F.text == "Расход"))
@@ -200,6 +198,3 @@ async def process_category_name(message: Message, state: FSMContext):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
-
-    
