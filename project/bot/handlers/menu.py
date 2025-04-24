@@ -49,16 +49,12 @@ async def categories_handler(message: Message, state: FSMContext):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(or_f(F.text == "Транзакция",F.text=="Перейти к транзакциям"))
+@router.message(or_f(F.text == "Мои Записи", F.text=="Перейти к моим записям"))
 async def transaction_handler(message: Message, state: FSMContext):
     try:
         await state.set_state(Context.IN_TRANSACTIONS)
         await message.answer(
-            "💸 Что вы хотите сделать с вашими транзакциями?  Выберите действие:\n"
-            "* ➕ Добавить\n"
-            "* ✏️ Изменить\n"
-            "* 🗑 Удалить\n"
-            "* 📋 Посмотреть список\n",
+            text=trasaction_actions,
             reply_markup=await get_transaction_keyboard()
         )
     except Exception as e:

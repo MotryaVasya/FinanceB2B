@@ -51,7 +51,7 @@ async def start_keyboard() -> ReplyKeyboardMarkup:
     """
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="Статистика"), KeyboardButton(text="Категории"),KeyboardButton(text="Транзакция")],
+            [KeyboardButton(text="Статистика"), KeyboardButton(text="Категории"),KeyboardButton(text="Мои записи")],
             [KeyboardButton(text="Баланс"),KeyboardButton(text="Помощь")],
         ],
         resize_keyboard=True
@@ -127,7 +127,7 @@ async def Afteradd_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()
     builder.add(
-            KeyboardButton(text="Перейти к транзакциям"),
+            KeyboardButton(text="Перейти к моим записям"),
         )
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
