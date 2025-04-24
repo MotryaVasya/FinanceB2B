@@ -48,43 +48,35 @@ async def go_back(message: Message, state: FSMContext):
                 await start_keyboard()
             ),
             "ADD_CATEGORY": (
-                "🔙 Возвращаемся в меню категорий!",
                 cattegory_text,
-                await add_back_button(get_categories_keyboard())
+                await get_categories_keyboard()
             ),
             "EDIT_CATEGORY": (
-                "🔙 Возвращаемся в меню категорий!",
                 cattegory_text,
                 await add_back_button(get_categories_keyboard())
             ),
             "SHOW_CATEGORIES": (
-                "🔙 Возвращаемся в меню категорий!",
                 cattegory_text,
                 await add_back_button(get_categories_keyboard())
             ),
             "AFTER_ADD": (
-                "🔙 Возвращаемся в меню категорий!",
                 cattegory_text,
                 await add_back_button(get_categories_keyboard())
             ),
             "EDIT_SELECT_CATEGORY": (
-                "🔙 Возвращаемся в меню категорий!",
                 cattegory_text,
                 await add_back_button(get_all_categories())
             ),
             "ADD_TRANSACTION": (
-                "🔙 Возвращаемся в меню транзакций!",
-                transaction_text,
+                trasaction_actions,
                 await add_back_button(get_transaction_keyboard())
             ),
             "SKIP_TRANSACTIONS": (
-                "🔙 Возвращаемся в меню транзакций!",
-                transaction_text,
+                trasaction_actions,
                 await add_back_button(get_transaction_keyboard())
             ),
             "NOT_SKIP_TRANSACTIONS": (
-                "🔙 Возвращаемся в меню транзакций!",
-                transaction_text,
+                trasaction_actions,
                 await add_back_button(get_transaction_keyboard())
             ),
             "handle_text_input": (

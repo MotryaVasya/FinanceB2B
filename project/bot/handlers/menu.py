@@ -56,7 +56,7 @@ async def categories_handler(message: Message, state: FSMContext):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(or_f(F.text == "Транзакция", F.text == "Перейти к транзакциям"))
+@router.message(or_f(F.text == "Мои записи", F.text == "Перейти к моим записям"))
 async def transaction_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
     open("transactions.txt", "w").write(str(await save.update(user_id, "MAIN_TRANSACTIONS")))

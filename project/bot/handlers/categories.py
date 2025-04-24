@@ -60,12 +60,10 @@ async def show_categories_list(message: Message):
 async def add_handler(message: Message, state: FSMContext):
     """Обработчик для кнопки "Добавить"."""
     user_id = message.from_user.id
-    await save.update(user_id, "ADD_CATEGORY")
-    open("add_handler.txt", "w").write(str(await save.get(user_id)))
+    open("add_handler.txt", "w").write(str(await save.update(user_id, "ADD_CATEGORY")))
     open("main44.txt", "w").write(str(await save.convert_to_json()))
     await state.set_state(Context.IN_CATEGORIES)
     await message.answer("✏️ Введите название вашей категории:")
-
 
 @router.message(or_f(F.text == "Доход", F.text == "Расход"))
 async def after_add(message: Message):
@@ -85,8 +83,12 @@ async def show_categories(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     open("edit_handler.txt", "w").write(str(await save.update(user_id, "EDIT_CATEGORY")))
     try:
-        current_state = await state.get_state()
-        await (current_state, message)
+            current_state = await state.get_state()
+            if current_state == Context.IN_CATEGORIES:
+                await message.answer(
+            "🎉 Вот все ваши категории! Какую вы хотите изменить?",
+            reply_markup=await make_categories_keyboard()
+        )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
@@ -201,11 +203,4 @@ async def process_category_name(message: Message, state: FSMContext):
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 
-async def handle_update_in_categories(state: FSMContext, message: Message):
-    """Обработчик для состояния Context.IN_CATEGORIES при обновлении."""
-    current_state = await state.get_state()
-    if current_state == Context.IN_CATEGORIES:
-        await message.answer(
-            "🎉 Вот все ваши категории! Какую вы хотите изменить?",
-            reply_markup=await make_categories_keyboard()
-        )
+    

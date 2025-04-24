@@ -7,11 +7,6 @@ from project.bot.keyboards.reply import *
 from project.bot.Save import save
 router=Router()
 
-
-@router.callback_query(F.text == "Добавить")
-async def alert(callback: CallbackQuery):
-    await callback.answer(text='В скором будущем', show_alert=True)
-
 #TODO доделать добавление, удаление, обновление
 @router.message(F.text == "Добавить")
 async def add_handler(message: Message, state: FSMContext):
@@ -19,11 +14,14 @@ async def add_handler(message: Message, state: FSMContext):
     open("add_handler.txt", "w").write(str(await save.update(user_id, "ADD_TRANSACTION")))
     open("main44.txt", "w").write(str(await save.convert_to_json()))
     try:
-        current_state = await state.get_state()
-        await handle_add_in_transactions(current_state, message)
+            current_state = await state.get_state()
+            if current_state == Context.IN_TRANSACTIONS:
+                await message.answer(
+        "💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
+        reply_markup=await get_all_categories()
+        )
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
-
 
 @router.message(F.text == "Пропустить", TransactionStates.waiting_for_transaction_description)
 async def handle_skip_description(message: Message, state: FSMContext):
@@ -36,7 +34,6 @@ async def handle_skip_description(message: Message, state: FSMContext):
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
 
-
 @router.message(TransactionStates.waiting_for_transaction_description)
 async def handle_description_input(message: Message, state: FSMContext):
     user_id = message.from_user.id
@@ -47,22 +44,3 @@ async def handle_description_input(message: Message, state: FSMContext):
         await state.set_state(TransactionStates.waiting_for_transaction_amount)
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
-
-
-async def handle_add_in_transactions(state: FSMContext, message: Message):
-    """Обработчик для состояния Context.IN_TRANSACTIONS при добавлении."""
-    current_state = await state.get_state()
-    if current_state == Context.IN_TRANSACTIONS:
-        await message.answer(
-            "💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
-            reply_markup=await get_all_categories()
-        )
-
-async def handle_update_in_transactions(state: FSMContext, message: Message):
-    """Обработчик для состояния Context.IN_TRANSACTIONS при обновлении."""
-    current_state = await state.get_state()
-    if current_state == Context.IN_TRANSACTIONS:
-        await message.answer(
-            "💸 Давайте создадим транзакцию! Пожалуйста, выберите категорию:",
-            reply_markup=await get_all_categories()
-        )
