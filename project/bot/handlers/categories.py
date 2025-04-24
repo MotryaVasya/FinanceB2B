@@ -87,12 +87,14 @@ async def delete_den(message: Message, state: FSMContext):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-@router.message(F.text=="Перейти к меню")
+        
+@router.message(F.text=="Пeрейти в меню")
 async def delete_menu(message: Message, state: FSMContext):
     try:
         await state.clear()
         await message.answer(
-        "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
+        "🔙 Возвращаемся в главное меню!\n\
+        Чем займёмся дальше? 😊",
         reply_markup=await start_keyboard()
         )
     except Exception as e:
@@ -209,8 +211,7 @@ async def skip_name(message: types.Message, state: FSMContext):
     try:
         await state.clear()
         await message.answer(
-            "🔄 Хорошо! Давайте изменим тип вашей категории 😊",
-            reply_markup=await make_type_keyboard()
+            "В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜"
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -232,7 +233,7 @@ async def handle_text_input(message: types.Message, state: FSMContext):
             print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 
-@router.message(F.text.in_(["Доход", "Расход","Пропyстить"]))
+@router.message(F.text.in_(["Доход", "Расход"]))
 async def set_type(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_data:

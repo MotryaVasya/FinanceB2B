@@ -24,4 +24,5 @@ class CategoryStates(StatesGroup):
 class Context(StatesGroup):
     IN_CATEGORIES = State()
     IN_TRANSACTIONS = State()
-
+    popa=State()
+    biba=State()

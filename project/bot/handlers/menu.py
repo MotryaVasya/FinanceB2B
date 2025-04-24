@@ -17,8 +17,9 @@ from project.bot.keyboards.reply import (
 router=Router()
 
 @router.message(F.text == "Помощь")
-async def help_handler(message: Message):
+async def help_handler(message: Message,state: FSMContext):
     user_id = message.from_user.id
+    await state.set_state(Context.popa)
     open("categories.txt", "w").write(str(await save.update(user_id, "MAIN_HELP")))
     try:
         await message.answer(
@@ -28,9 +29,21 @@ async def help_handler(message: Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
+@router.message(or_f(F.text=="Перейти в меню"),Context.popa)
+async def start_handler_for_help(message: Message,state: FSMContext):
+    try:
+        await state.clear()
+        await message.answer(
+            pre_help,
+            reply_markup=await start_keyboard()
+        )
+    except Exception as e:
+        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
+
 @router.message(F.text == "Баланс")
-async def cash_handler(message: Message):
+async def cash_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
+    await state.set_state(Context.biba)
     text = "💫 Ваш баланс: {В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜} \nУ тебя всё под контролем! 🧘‍♂️\n"
     open("balance.txt", "w").write(str(await save.update(user_id, "BALANCE")))
     open("main44.txt", "w").write(str(await save.convert_to_json()))
@@ -41,7 +54,6 @@ async def cash_handler(message: Message):
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
 
 @router.message(F.text == "Категории")
 async def categories_handler(message: Message, state: FSMContext):

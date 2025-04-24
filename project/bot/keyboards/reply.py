@@ -125,7 +125,7 @@ async def Money_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()
     builder.add(
-            KeyboardButton(text="Пeрейти в меню"),
+            KeyboardButton(text="Перейти в меню"),
             KeyboardButton(text="Пополнить"),
         )
     keyboard = builder.as_markup(resize_keyboard=True)
