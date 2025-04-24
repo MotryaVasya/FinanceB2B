@@ -60,15 +60,14 @@ async def show_categories_list(message: Message):
 async def add_handler(message: Message, state: FSMContext):
     """Обработчик для кнопки "Добавить"."""
     user_id = message.from_user.id
-    open("add_handler.txt", "w").write(str(await save.update(user_id, "ADD_CATEGORY")))
-    open("main44.txt", "w").write(str(await save.convert_to_json()))
+    open("main44.txt", "w").write(str(await save.update(user_id, "ADD_CATEGORY")))
     await state.set_state(Context.IN_CATEGORIES)
     await message.answer("✏️ Введите название вашей категории:")
 
 @router.message(or_f(F.text == "Доход", F.text == "Расход"))
 async def after_add(message: Message):
     user_id = message.from_user.id
-    open("after_add.txt", "w").write(str(await save.update(user_id, "AFTER_ADD")))
+    open("main44.txt", "w").write(str(await save.update(user_id, "AFTER_ADD")))
     try:
         await message.answer(
             "🎉 Отлично! Я сохранил вашу категорию 😊"
@@ -81,7 +80,7 @@ async def after_add(message: Message):
 @router.message(F.text == "Изменить")
 async def show_categories(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
-    open("edit_handler.txt", "w").write(str(await save.update(user_id, "EDIT_CATEGORY")))
+    open("main44.txt", "w").write(str(await save.update(user_id, "EDIT_CATEGORY")))
     try:
             current_state = await state.get_state()
             if current_state == Context.IN_CATEGORIES:
@@ -169,7 +168,7 @@ async def set_type(message: types.Message):
 @router.message(F.text == "Пропустить")
 async def skip_type(message: types.Message):
     user_id = message.from_user.id
-    open("skip_type.txt", "w").write(str(await save.update(user_id, "SKIP_TYPE")))
+    open("main44.txt", "w").write(str(await save.update(user_id, "SKIP_TYPE")))
     try:
         await message.answer(
             "✨ Всё супер! Сохраняем изменения? 😊",

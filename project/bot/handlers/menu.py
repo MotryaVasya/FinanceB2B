@@ -59,7 +59,7 @@ async def categories_handler(message: Message, state: FSMContext):
 @router.message(or_f(F.text == "Мои записи", F.text == "Перейти к моим записям"))
 async def transaction_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
-    open("transactions.txt", "w").write(str(await save.update(user_id, "MAIN_TRANSACTIONS")))
+    open("main44.txt", "w").write(str(await save.update(user_id, "MAIN_TRANSACTIONS")))
     try:
         await state.set_state(Context.IN_TRANSACTIONS)
         await message.answer(

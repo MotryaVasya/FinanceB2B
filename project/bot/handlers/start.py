@@ -53,31 +53,31 @@ async def go_back(message: Message, state: FSMContext):
             ),
             "EDIT_CATEGORY": (
                 cattegory_text,
-                await add_back_button(get_categories_keyboard())
+                await add_back_button(await get_categories_keyboard())
             ),
             "SHOW_CATEGORIES": (
                 cattegory_text,
-                await add_back_button(get_categories_keyboard())
+                await add_back_button(await get_categories_keyboard())
             ),
             "AFTER_ADD": (
                 cattegory_text,
-                await add_back_button(get_categories_keyboard())
+                await add_back_button(await get_categories_keyboard())
             ),
             "EDIT_SELECT_CATEGORY": (
                 cattegory_text,
-                await add_back_button(get_all_categories())
+                await add_back_button(await get_all_categories())
             ),
             "ADD_TRANSACTION": (
                 trasaction_actions,
-                await add_back_button(get_transaction_keyboard())
+                await add_back_button(await get_transaction_keyboard())
             ),
             "SKIP_TRANSACTIONS": (
                 trasaction_actions,
-                await add_back_button(get_transaction_keyboard())
+                await add_back_button(await get_transaction_keyboard())
             ),
             "NOT_SKIP_TRANSACTIONS": (
                 trasaction_actions,
-                await add_back_button(get_transaction_keyboard())
+                await add_back_button(await get_transaction_keyboard())
             ),
             "handle_text_input": (
                 f"✨ Введите новое название для категории '{user_data.get(user_id, {}).get('current_category', 'неизвестно')}' или пропустите:",
