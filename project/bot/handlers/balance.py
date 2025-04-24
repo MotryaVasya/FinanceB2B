@@ -22,7 +22,7 @@ async def start_handler_for_help(message: Message):
 async def  Add_money_handler(message: Message):
     user_id = message.from_user.id
     user_state_history.update({user_id:"ADD_MONEY"})
-    text=(f"💰 Хотите пополнить баланс?\n 🏦 Перейдите в раздел Транзакции для пополнения! 💳📈\n ")
+    text=(f'💰 Хотите пополнить баланс? 🏦 Перейдите в раздел "Мои записи" для пополнения! 💳📈\n')
     try:
         await message.answer(
             text,
