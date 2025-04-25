@@ -11,6 +11,7 @@
 - Поддержка пагинации для списковых запросов
 """
 
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from project.db.crud import transaction as crud
 from project.db.schemas.transaction import TransactionCreate, TransactionUpdate
@@ -40,7 +41,7 @@ async def get(session: AsyncSession, transaction_id: int) -> Transaction | None:
     """
     return await crud.get_transaction(session, transaction_id)
 
-async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction] | list[None]:
+async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
     """Получает список транзакций с пагинацией.
     
     Args:
@@ -77,3 +78,29 @@ async def delete(session: AsyncSession, transaction_id: int) -> bool:
         True если удаление успешно, False если транзакция не найдена
     """
     return await crud.delete_transaction(session, transaction_id)
+
+async def get_from_month(session: AsyncSession, month: int) -> list[Transaction]:
+    """Получает список транзакций за указанный диапазон дат.
+
+    Args:
+        session: Асинхронная сессия БД.
+        from_date: Начальная дата диапазона.
+        to_date: Конечная дата диапазона.
+
+    Returns:
+        Список транзакций, у которых дата попадает в указанный диапазон (включительно).
+    """
+    return await crud.get_tranasctions_from_month(session, month)
+
+async def get_from_days(session: AsyncSession, from_date: datetime, to_date: datetime) -> list[Transaction]:
+    """Получает список транзакций за указанный диапазон дат.
+
+    Args:
+        session: Асинхронная сессия БД.
+        from_date: Начальная дата диапазона.
+        to_date: Конечная дата диапазона.
+
+    Returns:
+        Список транзакций, у которых дата попадает в указанный диапазон (включительно).
+    """
+    return await crud.get_tranasctions_from_days(session, from_date, to_date)

@@ -26,6 +26,32 @@ async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends
             "time": datetime.now().isoformat(),
         }))
 
+@router.get('/from_days', response_model=list[TransactionOut])
+async def get_transactions(from_date: datetime, to_date: datetime, db: AsyncSession = Depends(get_db)):
+    try:
+        return await transaction_service.get_from_days(db, from_date, to_date)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(json.dumps({
+            "message": "Ошибка при получении транзакций за месяц на стороне API",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+
+@router.get('/', response_model=list[TransactionOut])
+async def get_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+    try:
+        return await transaction_service.get_all(db, skip, limit)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(json.dumps({
+            "message": "Ошибка при получении транзакций на стороне API",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+
 @router.get('/{transaction_id}', response_model=TransactionOut, 
             responses={404: {
                 "description": "Transaction not found",}})
@@ -45,20 +71,19 @@ async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db
             "time": datetime.now().isoformat(),
         }))
 
-
-# из-за пустово списка который возвраащется при пустой таблице может быть ошибка в response_model что она ожидает в возврате list[TransactionOut]
-@router.get('/', response_model=list[TransactionOut])
-async def get_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+@router.get('/from_month/{month}', response_model=list[TransactionOut])
+async def get_transactions(month: int, db: AsyncSession = Depends(get_db)):
     try:
-        return await transaction_service.get_all(db, skip, limit)
+        return await transaction_service.get_from_month(db, month)
     except HTTPException:
         raise
     except Exception as e:
         logging.error(json.dumps({
-            "message": "Ошибка при получении транзакций на стороне API",
+            "message": "Ошибка при получении транзакций за месяц на стороне API",
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
+
 @router.put('/{transaction_id}', response_model=TransactionOut)
 async def update_transaction(transaction_id: int, data: TransactionUpdate, db: AsyncSession = Depends(get_db)):
     try:

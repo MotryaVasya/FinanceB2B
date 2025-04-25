@@ -45,7 +45,7 @@ import logging
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select, extract
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
 from project.db.models.category import Transaction # TODO потом поменять импорт из category
@@ -246,3 +246,49 @@ async def delete_transaction(session: AsyncSession, transaction_id: int) -> bool
         }))
         return False
 
+async def get_tranasctions_from_month(session: AsyncSession, month: int) -> list[Transaction]:
+    """Получает список транзакций за указанный месяц.
+
+    Args:
+        session: Асинхронная сессия БД.
+        month: Номер месяца (от 1 до 12).
+
+    Returns:
+        Список транзакций, совершённых в указанном месяце. 
+        Если произошла ошибка — возвращается пустой список.
+    """
+    try:
+        result = await session.execute(select(Transaction).where(extract('month', Transaction.date) == month))
+        transactions = result.scalars().all()
+        return transactions 
+    except Exception as e:
+        logging.error(json.dumps({
+            "message": f"Ошибка получения списка транзакций за месяц {month}",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+        return []
+
+async def get_tranasctions_from_days(session: AsyncSession, from_date: datetime, to_date: datetime) -> list[Transaction]:
+    """Получает список транзакций за указанный диапазон дат.
+
+    Args:
+        session: Асинхронная сессия БД.
+        from_date: Начальная дата диапазона.
+        to_date: Конечная дата диапазона.
+
+    Returns:
+        Список транзакций, совершённых в пределах указанного диапазона дат включительно.
+        Если произошла ошибка — возвращается пустой список.
+    """
+    try:
+        result = await session.execute(select(Transaction).where(Transaction.date>= from_date, Transaction.date <= to_date))
+        transactions = result.scalars().all()
+        return transactions 
+    except Exception as e:
+        logging.error(json.dumps({
+            "message": f"Ошибка получения списка транзакций с {str(from_date)} до {str(to_date)}",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+        return []
