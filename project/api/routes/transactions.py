@@ -5,7 +5,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from project.db.schemas.transaction import TransactionCreate, TransactionUpdate, TransactionOut
+from project.db.schemas.transaction import TopCategoriesByUserResponse, TransactionCategorySumOut, TransactionCreate, TransactionUpdate, TransactionOut
 from project.db.session import get_db 
 from project.services import transaction_service
 
@@ -26,10 +26,10 @@ async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends
             "time": datetime.now().isoformat(),
         }))
 
-@router.get('/from_days', response_model=list[TransactionOut])
+@router.get('/from_period', response_model=list[TransactionCategorySumOut])
 async def get_transactions(from_date: datetime, to_date: datetime, db: AsyncSession = Depends(get_db)):
     try:
-        return await transaction_service.get_from_days(db, from_date, to_date)
+        return await transaction_service.get_from_period(db, from_date, to_date)
     except HTTPException:
         raise
     except Exception as e:
@@ -52,6 +52,14 @@ async def get_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = D
             "time": datetime.now().isoformat(),
         }))
 
+@router.get("/top_categories_by_user", response_model=TopCategoriesByUserResponse)
+async def get_top_categories_by_user(from_date: datetime, to_date: datetime, user_id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        return await transaction_service.get_top_categories_by_user(db, from_date, to_date, user_id)
+    except Exception as e:
+        logging.error(f"Ошибка получения топ-3 категорий для пользователя {user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка получения данных: {str(e)}")
+
 @router.get('/{transaction_id}', response_model=TransactionOut, 
             responses={404: {
                 "description": "Transaction not found",}})
@@ -71,7 +79,7 @@ async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db
             "time": datetime.now().isoformat(),
         }))
 
-@router.get('/from_month/{month}', response_model=list[TransactionOut])
+@router.get('/from_month/{month}', response_model=list[TransactionCategorySumOut])
 async def get_transactions(month: int, db: AsyncSession = Depends(get_db)):
     try:
         return await transaction_service.get_from_month(db, month)

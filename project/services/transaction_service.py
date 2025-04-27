@@ -92,7 +92,7 @@ async def get_from_month(session: AsyncSession, month: int) -> list[Transaction]
     """
     return await crud.get_tranasctions_from_month(session, month)
 
-async def get_from_days(session: AsyncSession, from_date: datetime, to_date: datetime) -> list[Transaction]:
+async def get_from_period(session: AsyncSession, from_date: datetime, to_date: datetime) -> list[Transaction]:
     """Получает список транзакций за указанный диапазон дат.
 
     Args:
@@ -103,4 +103,24 @@ async def get_from_days(session: AsyncSession, from_date: datetime, to_date: dat
     Returns:
         Список транзакций, у которых дата попадает в указанный диапазон (включительно).
     """
-    return await crud.get_tranasctions_from_days(session, from_date, to_date)
+    return await crud.get_tranasctions_from_period(session, from_date, to_date)
+
+async def get_top_categories_by_user(session: AsyncSession, from_date: datetime, to_date: datetime, user_id: int):
+    """
+    Получает топ-3 категории по количеству транзакций для указанного пользователя в указанный период времени.
+
+    Эта функция вызывает функцию из модуля `crud`, чтобы извлечь данные по категориям, отсортированные по количеству транзакций
+    для конкретного пользователя (`user_id`) в пределах указанного диапазона дат (`from_date`, `to_date`).
+
+    Args:
+        session (AsyncSession): Асинхронная сессия БД, предоставляемая для работы с данными.
+        from_date (datetime): Начальная дата периода, за который нужно получить данные.
+        to_date (datetime): Конечная дата периода, за который нужно получить данные.
+        user_id (int): Идентификатор пользователя, для которого нужно получить топ-3 категории.
+
+    Returns:
+        list: Список категорий с их именами и количеством транзакций для указанного пользователя в периоде.
+            Если произошла ошибка, будет возвращен пустой список.
+    """
+    return await crud.get_top_categories_by_user(session, from_date, to_date, user_id)
+    

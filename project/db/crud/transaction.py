@@ -45,11 +45,12 @@ import logging
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, extract
+from sqlalchemy import func, select, extract
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
-from project.db.models.category import Transaction # TODO потом поменять импорт из category
-from project.db.schemas.transaction import TransactionCreate, TransactionUpdate
+from project.db.models.category import Transaction, Category # TODO потом поменять импорт из category
+from project.db.schemas.transaction import TopCategoriesByUserResponse, TopCategoryOut, TransactionCategorySumOut, TransactionCreate, TransactionUpdate
+
 
 async def parse_naive_datetime(date_input: str | datetime) -> datetime:
     """
@@ -246,7 +247,7 @@ async def delete_transaction(session: AsyncSession, transaction_id: int) -> bool
         }))
         return False
 
-async def get_tranasctions_from_month(session: AsyncSession, month: int) -> list[Transaction]:
+async def get_tranasctions_from_month(session: AsyncSession, month: int) -> list[TransactionCategorySumOut]:
     """Получает список транзакций за указанный месяц.
 
     Args:
@@ -258,9 +259,32 @@ async def get_tranasctions_from_month(session: AsyncSession, month: int) -> list
         Если произошла ошибка — возвращается пустой список.
     """
     try:
-        result = await session.execute(select(Transaction).where(extract('month', Transaction.date) == month))
-        transactions = result.scalars().all()
-        return transactions 
+        result = await session.execute(
+            select(
+                Transaction.category_id,
+                Category.name_category.label("category_name"),
+                func.sum(Transaction.full_sum).label("total_sum")
+            ).join(
+                Category, Transaction.category_id == Category.id
+            ).where(
+                extract('month', Transaction.date) == month
+            ).group_by(
+                Transaction.category_id,
+                Category.name_category)
+            )
+        
+        transactions = result.all()
+
+        transactions_summary = [
+            TransactionCategorySumOut(
+                category_id=category_id,
+                category_name=category_name,
+                total_sum=float(total_sum)
+            )
+            for category_id, category_name, total_sum in transactions
+        ]
+
+        return transactions_summary
     except Exception as e:
         logging.error(json.dumps({
             "message": f"Ошибка получения списка транзакций за месяц {month}",
@@ -269,26 +293,116 @@ async def get_tranasctions_from_month(session: AsyncSession, month: int) -> list
         }))
         return []
 
-async def get_tranasctions_from_days(session: AsyncSession, from_date: datetime, to_date: datetime) -> list[Transaction]:
-    """Получает список транзакций за указанный диапазон дат.
+async def get_tranasctions_from_period(session: AsyncSession, from_date: datetime, to_date: datetime) -> list[TransactionCategorySumOut]:
+    """Получает сумму транзакций по категориям за указанный период.
 
     Args:
         session: Асинхронная сессия БД.
-        from_date: Начальная дата диапазона.
-        to_date: Конечная дата диапазона.
+        from_date: Начальная дата периода (включительно).
+        to_date: Конечная дата периода (включительно).
 
     Returns:
-        Список транзакций, совершённых в пределах указанного диапазона дат включительно.
-        Если произошла ошибка — возвращается пустой список.
+        Список сумм транзакций по категориям.
+        В случае ошибки — возвращается пустой список.
     """
     try:
-        result = await session.execute(select(Transaction).where(Transaction.date>= from_date, Transaction.date <= to_date))
-        transactions = result.scalars().all()
-        return transactions 
+
+        result = await session.execute(
+            select(
+                Transaction.category_id,
+                Category.name_category.label("category_name"),
+                func.sum(Transaction.full_sum).label("total_sum")
+            ).join(
+                Category, Transaction.category_id == Category.id
+            ).where(
+                Transaction.date >= from_date,
+                Transaction.date <= to_date
+            ).group_by(
+                Transaction.category_id,
+                Category.name_category
+            )
+        )
+
+        transactions_sum_by_category = result.all()
+
+        transactions_summary = [
+            TransactionCategorySumOut(
+                category_id=category_id,
+                category_name=category_name,
+                total_sum=float(total_sum)
+            )
+            for category_id, category_name, total_sum in transactions_sum_by_category
+        ]
+
+        return transactions_summary
+    
     except Exception as e:
         logging.error(json.dumps({
-            "message": f"Ошибка получения списка транзакций с {str(from_date)} до {str(to_date)}",
+            "message": f"Ошибка получения сумм транзакций с именами категорий с {str(from_date)} до {str(to_date)}",
             "error": str(e),
             "time": datetime.now().isoformat(),
         }))
         return []
+    
+async def get_top_categories_by_user(
+    session: AsyncSession, from_date: datetime, to_date: datetime, user_id: int
+) -> TopCategoriesByUserResponse:
+    """Получает сумму транзакций по категориям и топ-3 категории по количеству транзакций для указанного пользователя."""
+    try:
+        result = await session.execute(
+            select(
+                Transaction.category_id,
+                Category.name_category.label("category_name"),
+                func.sum(Transaction.full_sum).label("total_sum"),
+                func.count().label("transaction_count")
+            )
+            .join(Category, Transaction.category_id == Category.id)
+            .where(
+                Transaction.date >= from_date,
+                Transaction.date <= to_date,
+                Transaction.user_id == user_id
+            )
+            .group_by(
+                Transaction.category_id,
+                Category.name_category
+            )
+            .having(func.count() > 0)
+            .order_by(func.count().desc())
+        )
+
+        transactions_sum_by_category = result.all()
+
+        transactions_summary = [
+            TransactionCategorySumOut(
+                category_id=category_id,
+                category_name=category_name,
+                total_sum=float(total_sum)
+            )
+            for category_id, category_name, total_sum, _ in transactions_sum_by_category
+        ]
+
+        top_categories = sorted(
+            transactions_sum_by_category, key=lambda x: x[3], reverse=True
+        )[:3]
+
+        top_categories_summary = [
+            TopCategoryOut(
+                category_id=category_id,
+                category_name=category_name,
+                transaction_count=transaction_count
+            )
+            for category_id, category_name, _, transaction_count in top_categories
+        ]
+
+        return TopCategoriesByUserResponse(
+            transactions_summary=transactions_summary,
+            top_categories=top_categories_summary
+        )
+
+    except Exception as e:
+        logging.error(json.dumps({
+            "message": f"Ошибка получения данных по транзакциям с {str(from_date)} до {str(to_date)} для пользователя {user_id}",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+        return TopCategoriesByUserResponse(transactions_summary=[], top_categories=[])
