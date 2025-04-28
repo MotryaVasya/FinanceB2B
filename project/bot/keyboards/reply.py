@@ -18,7 +18,7 @@ async def make_edit_keyboard():
 
 async def make_skip_keyboard():
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="Пропустить")]],
+        keyboard=[[KeyboardButton(text="Пропустить название")]],
         resize_keyboard=True
     )
 
@@ -28,8 +28,8 @@ async def make_type_keyboard():
     builder.add(
         KeyboardButton(text="Доход"),
         KeyboardButton(text="Расход"),
+        KeyboardButton(text="Пропустить ТИП")
     )
-    builder.add(KeyboardButton(text="Пропyстить"))
     builder.adjust(3, 1)
 
     return builder.as_markup(resize_keyboard=True)
@@ -83,9 +83,9 @@ async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     """
     builder = ReplyKeyboardBuilder()
     builder.add(
-        KeyboardButton(text="Добавить"),
-        KeyboardButton(text="Изменить"),
-        KeyboardButton(text="Удалить"),
+        KeyboardButton(text="Добавить КАТЕГОРИЮ"),
+        KeyboardButton(text="Изменить КАТЕГОРИЮ"),
+        KeyboardButton(text="Удалить КАТЕГОРИЮ"),
         KeyboardButton(text="Посмотреть список существующих"),
     )
     builder.adjust(3, 1, 1)
@@ -223,8 +223,8 @@ async def delete_keyboard_affter() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()
     builder.add(
-            KeyboardButton(text="Потвердить"),
-            KeyboardButton(text="Отмена")
+            KeyboardButton(text="Подтвердить УДАЛЕНИЕ КАТЕГОРИИ"),
+            KeyboardButton(text="Отменить УДАЛЕНИЕ КАТЕГОРИИ")
         )
     keyboard = builder.as_markup(resize_keyboard=True)
     return keyboard
@@ -233,8 +233,7 @@ async def deny_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     builder.add(
             KeyboardButton(text="Вернутся к списку категорий"),
-            KeyboardButton(text="Перейти к меню"),
-            KeyboardButton(text="Нaзад"),
+            KeyboardButton(text="В меню"),
         )
     builder.adjust(1)
     keyboard = builder.as_markup(resize_keyboard=True)

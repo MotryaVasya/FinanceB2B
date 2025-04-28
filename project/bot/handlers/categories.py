@@ -40,8 +40,7 @@ def validate_name(name: str) -> bool:
 
 
 router = Router()
-
-@router.message(or_f(F.text== "Удалить",F.text=="Вернутся к списку категорий"))
+@router.message(or_f(F.text== "Удалить КАТЕГОРИЮ",F.text=="Вернутся к списку категорий"))
 async def skip_name(message: types.Message, state: FSMContext):
     await state.set_state(CategoryStates.waiting_for_delete_category)
     try:
@@ -66,7 +65,7 @@ async def delete_categories(message: Message, state: FSMContext):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(F.text=="Потвердить")
+@router.message(F.text=="Подтвердить УДАЛЕНИЕ КАТЕГОРИИ")
 async def delete_categories(message: Message, state: FSMContext):
     try:
         await message.answer(
@@ -77,7 +76,7 @@ async def delete_categories(message: Message, state: FSMContext):
         await state.set_state(CategoryStates.waiting_for_delete_deny)
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-@router.message(or_f(F.text=="Отмена",CategoryStates.waiting_for_delete_deny))
+@router.message(or_f(F.text=="Отменить УДАЛЕНИЕ КАТЕГОРИИ"))
 async def delete_den(message: Message, state: FSMContext):
     try:
         await state.clear()
@@ -88,7 +87,7 @@ async def delete_den(message: Message, state: FSMContext):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
         
-@router.message(F.text=="Пeрейти в меню")
+@router.message(F.text=="В меню")
 async def delete_menu(message: Message, state: FSMContext):
     try:
         await state.clear()
@@ -130,7 +129,7 @@ async def show_temp_categories_list(message: Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
         
-@router.message(F.text == "Добавить")
+@router.message(F.text == "Добавить КАТЕГОРИЮ")
 async def add_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
     open("main44.txt", "w").write(str(await save.update(user_id, "ADD_CATEGORY")))
@@ -175,7 +174,7 @@ async def after_add(message: Message):
 
 
 
-@router.message(F.text == "Изменить")
+@router.message(F.text == "Изменить КАТЕГОРИЮ")
 async def show_categories(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     open("main44.txt", "w").write(str(await save.update(user_id, "EDIT_CATEGORY")))
@@ -203,15 +202,18 @@ async def select_category(message: types.Message, state: FSMContext):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(F.text == "Пропустить")
+@router.message(F.text == "Пропустить название")
 async def skip_name(message: types.Message, state: FSMContext):
+    
     user_id = message.from_user.id
     if not user_data.get(user_id):
         return await message.answer("Ошибка: категория не выбрана")
     try:
         await state.clear()
+        await state.set_state(CategoryStates.first)
         await message.answer(
-            "В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜"
+            "🔄 Хорошо! Давайте изменим тип вашей категории 😊",
+            reply_markup= await make_type_keyboard()
         )
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
@@ -233,7 +235,7 @@ async def handle_text_input(message: types.Message, state: FSMContext):
             print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 
-@router.message(F.text.in_(["Доход", "Расход"]))
+@router.message(or_f(F.text=="Доход",F.text=="Расход"))
 async def set_type(message: types.Message):
     user_id = message.from_user.id
     if user_id in user_data:
@@ -246,6 +248,30 @@ async def set_type(message: types.Message):
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
+@router.message(F.text=="Пропустить ТИП")
+async def set_type(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    vrema=await state.get_state()
+    if(vrema==CategoryStates.first):
+        await state.set_state(CategoryStates.second)
+    vrema2=await state.get_state()
+    if user_id in user_data:
+        user_data[user_id]["type"] = message.text.lower()
+    try:
+        if(vrema2==CategoryStates.second):
+            await message.answer(
+                "😕 Ничего не изменилось.\n Хотите вернуться и попробовать снова или оставить всё как есть?\n",
+                reply_markup=await aboba_keyboard()
+            )
+            await state.clear()
+            return
+        await message.answer(
+            "✨ Всё супер! Сохраняем изменения? 😊",
+            reply_markup=await make_save_keyboard()
+        )
+        await state.clear()
+    except Exception as e:
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Сохранить изменения")
 async def save_changes(message: types.Message):
