@@ -14,7 +14,7 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from project.db.crud import transaction as crud
-from project.db.schemas.transaction import TransactionCreate, TransactionUpdate
+from project.db.schemas.transaction import TransactionCreate, TransactionStatistics, TransactionUpdate
 from project.db.models.category import Transaction # TODO потом поменять импорт из category
 
 async def create(session: AsyncSession, data: TransactionCreate)-> Transaction | None:
@@ -79,7 +79,7 @@ async def delete(session: AsyncSession, transaction_id: int) -> bool:
     """
     return await crud.delete_transaction(session, transaction_id)
 
-async def get_from_month(session: AsyncSession, month: int) -> list[Transaction]:
+async def get_from_month(session: AsyncSession, month: int, user_id: int) -> list[Transaction]:
     """Получает список транзакций за указанный диапазон дат.
 
     Args:
@@ -90,22 +90,9 @@ async def get_from_month(session: AsyncSession, month: int) -> list[Transaction]
     Returns:
         Список транзакций, у которых дата попадает в указанный диапазон (включительно).
     """
-    return await crud.get_tranasctions_from_month(session, month)
+    return await crud.get_transactions_from_month(session, month, user_id)
 
-async def get_from_period(session: AsyncSession, from_date: datetime, to_date: datetime) -> list[Transaction]:
-    """Получает список транзакций за указанный диапазон дат.
-
-    Args:
-        session: Асинхронная сессия БД.
-        from_date: Начальная дата диапазона.
-        to_date: Конечная дата диапазона.
-
-    Returns:
-        Список транзакций, у которых дата попадает в указанный диапазон (включительно).
-    """
-    return await crud.get_tranasctions_from_period(session, from_date, to_date)
-
-async def get_top_categories_by_user(session: AsyncSession, from_date: datetime, to_date: datetime, user_id: int):
+async def get_statistics(session: AsyncSession, from_date: datetime, to_date: datetime, user_id: int) -> TransactionStatistics:
     """
     Получает топ-3 категории по количеству транзакций для указанного пользователя в указанный период времени.
 
@@ -122,5 +109,5 @@ async def get_top_categories_by_user(session: AsyncSession, from_date: datetime,
         list: Список категорий с их именами и количеством транзакций для указанного пользователя в периоде.
             Если произошла ошибка, будет возвращен пустой список.
     """
-    return await crud.get_top_categories_by_user(session, from_date, to_date, user_id)
+    return await crud.get_statistics(session, from_date, to_date, user_id)
     
