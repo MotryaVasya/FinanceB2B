@@ -6,6 +6,7 @@ from project.bot.handlers.start import router as start_router
 from project.bot.handlers.categories import router as categories_router
 from project.bot.handlers.transactions import router as transactions_router
 from project.bot.handlers.balance import router as balance_router
+from project.bot.handlers.statistic import router as statistic_router
 from project.bot.keyboards.botCommands import set_bot_commands
 from project.core.config import config
 
@@ -19,6 +20,8 @@ async def start():
     dp.include_router(balance_router)
     dp.include_router(categories_router)
     dp.include_router(transactions_router)
+    dp.include_router(statistic_router)
+    
     await set_bot_commands(bot)
     
     # print("Bot started...")
