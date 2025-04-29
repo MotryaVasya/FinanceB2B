@@ -6,16 +6,19 @@ from aiogram.fsm.context import FSMContext
 user_state_history = {}
 user_data = {}
 class TransactionStates(StatesGroup):
-    waiting_for_category_name = State()
+    waiting_for_name = State()
     waiting_for_transaction_description = State()
     waiting_for_transaction_amount = State()
     in_transactions=State()
+    wait_date=State()
 
 
 class CategoryStates(StatesGroup):
     waiting_for_category_name = State()
     waiting_for_category_type = State()
     new_category_name= State()
+    first= State()
+    second= State()
 
     waiting_for_delete_category = State()
     waiting_for_delete_deny=State()

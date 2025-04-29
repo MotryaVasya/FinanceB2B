@@ -1,5 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton,InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder,InlineKeyboardBuilder
+from datetime import datetime
+import calendar
 arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
 predefined_categories_types = {
 "Зарплата": "Доход",
@@ -12,6 +14,15 @@ predefined_categories_types = {
 arr_categoryes = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
 arr_transactions=[]
 user_categories = ["Еда", "Транспорт", "Развлечения", "Жильё"]
+months = list(calendar.month_name)[1:]
+async def doty_keyboard() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    for name in months:
+        builder.add(KeyboardButton(text=name),
+        )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
 
 async def add_back_button(keyboard: ReplyKeyboardMarkup):
     buttons = [row[:] for row in keyboard.keyboard]
@@ -25,7 +36,7 @@ async def make_edit_keyboard():
 
 async def make_skip_keyboard():
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="Пропустить")]],
+        keyboard=[[KeyboardButton(text="Пропустить название")]],
         resize_keyboard=True
     )
 
@@ -34,8 +45,8 @@ async def make_type_keyboard():
     builder.add(
         KeyboardButton(text="Доход"),
         KeyboardButton(text="Расход"),
+        KeyboardButton(text="Пропустить ТИП")
     )
-    builder.add(KeyboardButton(text="Пропyстить"))
     builder.adjust(3, 1)
     return builder.as_markup(resize_keyboard=True)
 
@@ -118,7 +129,7 @@ async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
         KeyboardButton(text="Добaвить запись"),
         KeyboardButton(text="Изменить запись"),
         KeyboardButton(text="Удалить запись"),
-        KeyboardButton(text="Посмотреть список записей")
+        KeyboardButton(text="История моих записей")
     )
     builder.adjust(3)
     keyboard = builder.as_markup(resize_keyboard=True)
@@ -139,6 +150,7 @@ async def Afteradd_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     builder.add(
             KeyboardButton(text="Перейти к моим записям"),
+            KeyboardButton(text="Вернутся к балансу")
         )
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
@@ -223,12 +235,33 @@ async def delete_keyboard() -> ReplyKeyboardMarkup:
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
 
+async def trans_all() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    for name in user_categories:
+        builder.add(
+                KeyboardButton(text=name)
+            )
+    builder.adjust(1)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
+
+async def zapis_add() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+        KeyboardButton(text="Назад"),
+        KeyboardButton(text="Пропустить описание"),
+    )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
+
 async def delete_keyboard_affter() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()
     builder.add(
-            KeyboardButton(text="Потвердить"),
-            KeyboardButton(text="Отмена")
+            KeyboardButton(text="Подтвердить УДАЛЕНИЕ КАТЕГОРИИ"),
+            KeyboardButton(text="Отменить УДАЛЕНИЕ КАТЕГОРИИ")
         )
     
     keyboard = builder.as_markup(resize_keyboard=True)
@@ -239,8 +272,7 @@ async def deny_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     builder.add(
             KeyboardButton(text="Вернутся к списку категорий"),
-            KeyboardButton(text="Перейти к меню"),
-            KeyboardButton(text="Нaзад"),
+            KeyboardButton(text="В меню"),
         )
     builder.adjust(1)
     keyboard = builder.as_markup(resize_keyboard=True)
