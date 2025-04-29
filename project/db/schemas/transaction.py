@@ -36,3 +36,36 @@ class TransactionOut(TransactionBase):
             raise ValueError("Timezone-aware datetime not allowed")
         return v
 
+class TransactionCategorySumOut(BaseModel):
+    category_id: int
+    category_name: str
+    total_sum: float
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={
+            datetime: lambda v: v.isoformat()  # Сериализация в ISO формат
+        }
+    )
+
+class TopCategoryOut(BaseModel):
+    category_name: str
+    full_sum: float
+    transaction_history: str # exemple (500+500+500+500)
+
+
+class TopCategoriesByUserResponse(BaseModel):
+    transactions_summary: list[TransactionCategorySumOut]
+    top_categories: list[TopCategoryOut]
+
+
+class CategorySum(BaseModel):
+    sum: float
+    type: int
+
+class TransactionStatistics(BaseModel):
+    from_date: datetime
+    to_date: datetime
+    income: CategorySum
+    expense: CategorySum
+    top_categories: list[TopCategoryOut]
+    
