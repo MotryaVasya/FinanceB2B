@@ -13,7 +13,6 @@ router = Router()
 
 @router.message(F.text == "Назад")
 async def go_back(message: Message, state: FSMContext):
-    """Обрабатывает нажатие кнопки "Назад", возвращая к предыдущему состоянию."""
     user_id = message.from_user.id
     user_data_list = await save.get(user_id)
     open("main44.txt","w").write(str(await save.convert_to_json()))
@@ -65,8 +64,8 @@ async def go_back(message: Message, state: FSMContext):
                 await start_keyboard()
             ),
             "EDIT_CATEGORY": (
-                "🎉 Вот все ваши записи! Какую вы хотите изменить?",
-                await add_back_button(await get_all_categories())
+                "🎉 Вот все ваши категории! Какую вы хотите изменить?",
+                await get_categories_keyboard()
             ),
             "SHOW_CATEGORIES": (    
                 cattegory_text,

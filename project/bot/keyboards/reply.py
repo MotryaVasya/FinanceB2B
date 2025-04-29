@@ -1,6 +1,14 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton,InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder,InlineKeyboardBuilder
 arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
+predefined_categories_types = {
+"Зарплата": "Доход",
+"Продукты": "Расход",
+    "Кафе": "Расход",
+    "Досуг": "Расход",
+    "Здоровье": "Расход",
+    "Транспорт": "Расход"
+}
 arr_categoryes = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
 arr_transactions=[]
 user_categories = ["Еда", "Транспорт", "Развлечения", "Жильё"]
@@ -15,13 +23,11 @@ async def make_edit_keyboard():
     builder.add(KeyboardButton(text="Изменить"))
     return builder.as_markup(resize_keyboard=True)
 
-
 async def make_skip_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="Пропустить")]],
         resize_keyboard=True
     )
-
 
 async def make_type_keyboard():
     builder = ReplyKeyboardBuilder()
@@ -31,9 +37,7 @@ async def make_type_keyboard():
     )
     builder.add(KeyboardButton(text="Пропyстить"))
     builder.adjust(3, 1)
-
     return builder.as_markup(resize_keyboard=True)
-
 
 async def make_save_keyboard():
     return ReplyKeyboardMarkup(
@@ -69,7 +73,6 @@ async def make_categories_keyboard():
     keyboard=builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
 
-
 async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для управления категориями.
@@ -83,9 +86,9 @@ async def get_categories_keyboard() -> ReplyKeyboardMarkup:
     """
     builder = ReplyKeyboardBuilder()
     builder.add(
-        KeyboardButton(text="Добавить"),
-        KeyboardButton(text="Изменить"),
-        KeyboardButton(text="Удалить"),
+        KeyboardButton(text="Добавить категорию"),
+        KeyboardButton(text="Изменить категорию"),
+        KeyboardButton(text="Удалить категорию"),
         KeyboardButton(text="Посмотреть список существующих"),
     )
     builder.adjust(3, 1, 1)
@@ -112,9 +115,9 @@ async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     """
     builder = ReplyKeyboardBuilder()
     builder.add(
-        KeyboardButton(text="Добaвить"),
-        KeyboardButton(text="Изменить"),
-        KeyboardButton(text="Удалить"),
+        KeyboardButton(text="Добaвить запись"),
+        KeyboardButton(text="Изменить запись"),
+        KeyboardButton(text="Удалить запись"),
         KeyboardButton(text="Посмотреть список записей")
     )
     builder.adjust(3)
@@ -139,6 +142,7 @@ async def Afteradd_keyboard() -> ReplyKeyboardMarkup:
         )
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
+
 async def help_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для раздела помощи.
@@ -155,7 +159,7 @@ async def help_keyboard() -> ReplyKeyboardMarkup:
         ],
         resize_keyboard=True
     )
-    return keyboard 
+    return keyboard
 
 async def gety_type_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
@@ -165,6 +169,25 @@ async def gety_type_keyboard() -> ReplyKeyboardMarkup:
         )
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)  
+
+async def create_user_categories_inline_keyboard(user_categories: list) -> InlineKeyboardMarkup:
+    """
+    Создает Inline клавиатуру со списком пользовательских категорий
+    и кнопкой "Назад".
+    """
+    builder = InlineKeyboardBuilder()
+    for category in user_categories:
+        builder.add(InlineKeyboardButton(
+            text=category,
+            callback_data=f"user_cat:{category}"
+        ))
+    builder.adjust(1)
+    
+    builder.row(InlineKeyboardButton(
+        text="⬅️ Назад",
+        callback_data="back_to_category_options"
+    ))
+    return builder.as_markup()
 
 async def get_all_categories() -> ReplyKeyboardMarkup:
     """
@@ -184,25 +207,6 @@ async def get_all_categories() -> ReplyKeyboardMarkup:
             KeyboardButton(text=name)
         )
     builder.add( KeyboardButton(text="Еще"))
-    builder.adjust(1)  # Первые 2 кнопки в одной строке, остальные переносятся
-    keyboard = builder.as_markup(resize_keyboard=True)
-    return await add_back_button(keyboard)
-async def temporary_all_categories() -> ReplyKeyboardMarkup:
-    """
-    Создает и возвращает клавиатуру для выбора категории.
-    
-    Кнопки:
-        - Добавить | Изменить
-        - Посмотреть список существующих
-    
-    Returns:
-        ReplyKeyboardMarkup: Клавиатура для работы с категориями.
-    """
-    builder = ReplyKeyboardBuilder()
-    for name in user_categories:
-        builder.add(
-            KeyboardButton(text=name)
-        )
     builder.adjust(1)  # Первые 2 кнопки в одной строке, остальные переносятся
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
@@ -226,8 +230,10 @@ async def delete_keyboard_affter() -> ReplyKeyboardMarkup:
             KeyboardButton(text="Потвердить"),
             KeyboardButton(text="Отмена")
         )
+    
     keyboard = builder.as_markup(resize_keyboard=True)
     return keyboard
+
 async def deny_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()
@@ -239,6 +245,7 @@ async def deny_keyboard() -> ReplyKeyboardMarkup:
     builder.adjust(1)
     keyboard = builder.as_markup(resize_keyboard=True)
     return keyboard
+
 async def aboba_keyboard() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""
     builder = ReplyKeyboardBuilder()

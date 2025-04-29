@@ -8,7 +8,7 @@ from project.bot.keyboards.reply import *
 from project.bot.Save import save
 router=Router()
 
-@router.message(or_f(F.text == "Добaвить"))
+@router.message(or_f(F.text == "Добaвить транзакцию"))
 async def add_transaction_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
     try:
