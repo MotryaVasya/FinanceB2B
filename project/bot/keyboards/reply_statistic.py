@@ -4,7 +4,6 @@ statistic_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="За период")],
         [KeyboardButton(text="За месяц")],
-        [KeyboardButton(text="Меню")]
     ],
     resize_keyboard=True
 )
