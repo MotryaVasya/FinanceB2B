@@ -1,9 +1,20 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from datetime import datetime
+import calendar
 arr = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
 arr_categoryes = ["Зарплата","Продукты","Кафе","Досуг","Здоровье","Транспорт"]
 arr_transactions=[]
 user_categories = ["Еда", "Транспорт", "Развлечения", "Жильё"]
+months = list(calendar.month_name)[1:]
+async def doty_keyboard() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    for name in months:
+        builder.add(KeyboardButton(text=name),
+        )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
 
 async def add_back_button(keyboard: ReplyKeyboardMarkup):
     buttons = [row[:] for row in keyboard.keyboard]
@@ -112,10 +123,10 @@ async def get_transaction_keyboard() -> ReplyKeyboardMarkup:
     """
     builder = ReplyKeyboardBuilder()
     builder.add(
-        KeyboardButton(text="Добaвить"),
-        KeyboardButton(text="Изменить"),
-        KeyboardButton(text="Удалить"),
-        KeyboardButton(text="Посмотреть список записей")
+        KeyboardButton(text="Добaвить запись"),
+        KeyboardButton(text="Изменить запись"),
+        KeyboardButton(text="Удалить запись"),
+        KeyboardButton(text="История моих записей")
     )
     builder.adjust(3)
     keyboard = builder.as_markup(resize_keyboard=True)
@@ -136,9 +147,10 @@ async def Afteradd_keyboard() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     builder.add(
             KeyboardButton(text="Перейти к моим записям"),
+            KeyboardButton(text="Вернутся к балансу")
         )
     keyboard = builder.as_markup(resize_keyboard=True)
-    return await add_back_button(keyboard)
+    return keyboard
 async def help_keyboard() -> ReplyKeyboardMarkup:
     """
     Создает и возвращает клавиатуру для раздела помощи.
@@ -218,6 +230,27 @@ async def delete_keyboard() -> ReplyKeyboardMarkup:
     builder.adjust(1)
     keyboard = builder.as_markup(resize_keyboard=True)
     return await add_back_button(keyboard)
+
+async def trans_all() -> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    for name in user_categories:
+        builder.add(
+                KeyboardButton(text=name)
+            )
+    builder.adjust(1)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
+
+async def zapis_add() -> ReplyKeyboardMarkup:
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+        KeyboardButton(text="Назад"),
+        KeyboardButton(text="Пропустить описание"),
+    )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
 
 async def delete_keyboard_affter() -> ReplyKeyboardMarkup:
     """Клавиатура для выбора типа"""

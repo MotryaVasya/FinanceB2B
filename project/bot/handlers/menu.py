@@ -40,11 +40,11 @@ async def start_handler_for_help(message: Message,state: FSMContext):
     except Exception as e:
         print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")
 
-@router.message(F.text == "Баланс")
+@router.message(or_f(F.text == "Баланс",F.text=="Вернутся к балансу"))
 async def cash_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
     await state.set_state(Context.biba)
-    text = "💫 Ваш баланс: {В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜} \nУ тебя всё под контролем! 🧘‍♂️\n"
+    text = "💫 Ваш баланс: {В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜}\n"
     open("balance.txt", "w").write(str(await save.update(user_id, "BALANCE")))
     open("main44.txt", "w").write(str(await save.convert_to_json()))
     try:
@@ -73,10 +73,9 @@ async def transaction_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
     open("main44.txt", "w").write(str(await save.update(user_id, "MAIN_TRANSACTIONS")))
     try:
-        # await state.set_state(TransactionStates.in_transactions)
-        # await message.answer(
-        #     text=trasaction_actions,
-        #     reply_markup=await get_transaction_keyboard()
-        await message.answer("В СКОРЫХ ОБНОВЛЕНИЯХ❗️🔜")
+        await state.set_state(TransactionStates.in_transactions)
+        await message.answer(
+            text=trasaction_actions,
+            reply_markup=await get_transaction_keyboard())
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")

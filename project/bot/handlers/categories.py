@@ -1,6 +1,7 @@
 from aiogram import Router, types, F
 from aiogram.types import Message
 from project.bot.states import *
+import re
 from project.bot.Save import save
 from project.bot.messages.messages import *
 from aiogram.types import KeyboardButton, ReplyKeyboardRemove
@@ -92,8 +93,8 @@ async def delete_menu(message: Message, state: FSMContext):
     try:
         await state.clear()
         await message.answer(
-        "🔙 Возвращаемся в главное меню!\n\
-        Чем займёмся дальше? 😊",
+        "🔙 Возвращаемся в главное меню!\n"
+        "Чем займёмся дальше? 😊",
         reply_markup=await start_keyboard()
         )
     except Exception as e:
