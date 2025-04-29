@@ -448,6 +448,7 @@ async def get_transactions_from_month(session: AsyncSession, month: int, user_id
     доход = 0, расход = 0, топ-3 категории — пустой список.
     """
     try:
+        user_id_subquery = select(User.id).where(User.tg_id == user_id).scalar_subquery()
         result = await session.execute(
             select(
                 Transaction.category_id,
@@ -460,7 +461,7 @@ async def get_transactions_from_month(session: AsyncSession, month: int, user_id
             .join(Category, Transaction.category_id == Category.id)
             .where(
                 extract('month', Transaction.date) == month,
-                Transaction.user_id == user_id
+                Transaction.user_id == user_id_subquery
             )
             .group_by(
                 Transaction.category_id,
@@ -544,6 +545,7 @@ async def get_statistics(session: AsyncSession, from_date: datetime, to_date: da
         TransactionStatistics: Статистика транзакций пользователя.
     """
     try:
+        user_id_subquery = select(User.id).where(User.tg_id == user_id).scalar_subquery()
         result = await session.execute(
             select(
                 Transaction.category_id,
@@ -557,7 +559,7 @@ async def get_statistics(session: AsyncSession, from_date: datetime, to_date: da
             .where(
                 Transaction.date >= from_date,
                 Transaction.date <= to_date,
-                Transaction.user_id == user_id
+                Transaction.user_id == user_id_subquery
             )
             .group_by(
                 Transaction.category_id,
