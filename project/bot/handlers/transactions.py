@@ -1,7 +1,7 @@
 from aiogram import Router, F
 import re
 from aiogram.filters import or_f,StateFilter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery,ReplyKeyboardRemove
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
 from project.bot.states import *
@@ -26,11 +26,14 @@ def is_valid_string(s):
         return False, "Строка содержит недопустимые символы"
     return True, "Строка валидна"
 
-@router.message(or_f(F.text == "Добaвить транзакцию"))
+@router.message(or_f(F.text == "Добaвить запись"))
 async def add_transaction_handler(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    open("show_categories.txt", "w").write(str(await save.update(user_id, "ADD_TRANSACTION")))
     try:
         await message.answer(
-            add_trans
+            reply_markup= await add_back_button(ReplyKeyboardMarkup(keyboard=[])),
+            text=add_trans
         )
     except Exception as e:
         print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
@@ -46,43 +49,51 @@ async def add_after_transaction(message: Message, state: FSMContext):
     except Exception as e:
         print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
 
-@router.message(TransactionStates.waiting_for_transaction_description)
-async def after_name(message: Message, state: FSMContext):
-    name = message.text.strip()
-    try:
-        await state.set_state(TransactionStates.waiting_for_transaction_amount)
-        await message.answer(
-            "🎉Укажите теперь сумму вашей записи:",
-
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
 
 @router.message(F.text=="Пропустить описание")
 async def after_description(message: Message, state: FSMContext):
     try:
         await message.answer(
-            "🎉Укажите теперь сумму вашей записи:"
+            "🎉Укажите теперь сумму вашей записи:",
+            reply_markup=ReplyKeyboardRemove()
         )
         await state.set_state(TransactionStates.waiting_for_transaction_amount)
     except Exception as e:
         print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
 
+@router.message(TransactionStates.waiting_for_transaction_description)
+async def after_name(message: Message, state: FSMContext):
+    name = message.text.strip()
+    user_id = message.from_user.id
+    open("show_categories.txt", "w").write(str(await save.update(user_id, "SUM_DESCRIPTION")))
+    try:
+        await state.set_state(TransactionStates.waiting_for_transaction_amount)
+        await message.answer(
+            "🎉Укажите теперь сумму вашей записи:",
+            reply_markup=ReplyKeyboardRemove()
+        )
+    except Exception as e:
+        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+
+
 @router.message(TransactionStates.waiting_for_transaction_amount)
 async def after_amount(message: Message, state: FSMContext):
     name = message.text.strip()
+    user_id = message.from_user.id
+    open("show_categories.txt", "w").write(str(await save.update(user_id, "TRANSACTION_DESCRIPTION_DATA")))
     try:
-        if(is_valid_string(name)==False):
-            await message.answer(
-                text_no,
-                )
-            return
-        else:
+        if name.isdigit():
             await state.set_state(TransactionStates.wait_date)
             await message.answer(
                 "Ура! 🎉 Ты успешно добавил сумму! Теперь укажи дату 📅😊",
                 reply_markup=await doty_keyboard(),
                 )
+        else:
+            await message.answer(
+                text_no,
+                )
+            return
+
     except Exception as e:
         print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
         
@@ -97,14 +108,6 @@ async def after_date(message: Message, state: FSMContext):
         )
     except Exception as e:
         print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
-
-
-
-
-
-
-
-
 
 @router.message(F.text == "Изменить запись")
 async def update_transaction_handler(message: Message, state: FSMContext):
@@ -127,11 +130,3 @@ async def del_transaction_handler(message: Message, state: FSMContext):
         print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
 
 
-#@router.message(F.text == "История моих записей")
-#async def show_transactions_list(message:Message, state:FSMContext):
-#    user_id=Message.from_user.id
-#    await save.update(user_id,"LIST_TRANSACTIONS")
-#    try:
-#        await
-#    except Exception as e:
-#        print(f"⚠️ Ошибка: {e.__class__.__name__}: {e}")

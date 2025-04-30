@@ -118,4 +118,83 @@ class Save:
             print()  # Пустая строка для разделения
         except Exception as e:
             print(f'Ошибка при выводе данных: {e}')
+class SaveUserData:
+    '''
+    Класс для сохранения и изменения списка задач для пользователей\n
+    :param user_data (dict): список в котором хранится\n
+    :param key (str): ID пользователя\n
+    :param value (dict): остальные данные по типу: <b>user_id, task_name, task_description, start_date_task, end_date_task </b>и<b> priority</b>
+    '''
+    def __init__(self):
+        self.user_data = {int: {}}
+        del self.user_data[int]
+
+    async def update_dict(self, user_id: int, data: {}):
+        '''
+        <i>Этот метод обновляет или добавляет новый список по 'user_id'</i>\n 
+        :param user_id (str): ID пользователя
+        :param data (dict): Данные для добавления/обновления
+        '''
+        try:
+            if self.user_data.get(user_id):
+                current_data = self.user_data.get(user_id)
+                current_data.update(data)
+                self.user_data[user_id] = current_data
+            else:
+                self.user_data.update({user_id: data})
+        except Exception as e:
+            print(f'Error occurred while updating dictionary: {str(e)}')
+
+    async def delete_id(self, user_id: int):
+        '''
+        <i>Этот метод удаляет список по 'user_id', если его нету то он выикдывает ошибку</i>\n
+        :param user_id (str): ID пользователя
+        '''
+        try:
+            del self.user_data[user_id]
+        except Exception as e:
+            print(f'Error occurred while deleting ID: {str(e)}')
+
+    async def find_element_by_user_id(self, user_id):
+        '''
+        <i>Этот метод возвращает список по 'user_id', если его нету то он выикдывает ошибку</i>\n
+        :param user_id (str): ID пользователя
+        :return: dict
+        '''
+        try:
+            return self.user_data[user_id]
+        except Exception as e:
+            print(f'Error occurred while finding ID: {str(e)}')
+
+    async def convert_to_json(self):
+        '''
+        <i>Этот метод возвращает список в формате JSON, если что-то пошло не так, он выкидывает ошибку но не завершает программу</i>\n
+        :return: JSON
+        '''
+        try:
+            return json.dumps(self.user_data, indent=4)
+        except Exception as e:
+            print(f'Error occurred while converting to JSON: {str(e)}')
+
+    async def print(self):
+        '''
+        <i>Этот метод выводит список в консоль</i>\n
+        '''
+        try:
+            for item in self.user_data.items():
+                print(item)
+        except Exception as e:
+            print(f'Error occurred while printing: {str(e)}')
+        
+    
+    # TODO до конца не уверен рабоатет это или нет, надо будет проверить, я не до конца понимаю как работает __call__
+    async def __call__(self, user_id: int, key: str):
+        ''' 
+        <i>Этот метод возвращает True если по 'user_id' есть 'key' который имеет значение, иначе False</i>\n
+        :param user_id (str): ID пользователя
+        :param key (str): ключ
+        :return: bool
+        '''
+        return self.user_data[user_id].get(key) is not None
+save_user_data=SaveUserData()
 save=Save()

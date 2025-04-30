@@ -59,6 +59,10 @@ async def go_back(message: Message, state: FSMContext):
                 cattegory_text,
                 await get_categories_keyboard()
             ),
+            "ADD_TRANSACTION": (
+                trasaction_actions,
+                await get_transaction_keyboard()
+            ),
             "SHOW_TRANSACTIONS": (
                 "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊",
                 await start_keyboard()
@@ -79,6 +83,10 @@ async def go_back(message: Message, state: FSMContext):
                 cattegory_text,
                 await add_back_button(await get_all_categories())
             ),
+            "TRANSACTION_DESCRIPTION_DATA": (
+                "🎉Укажите теперь сумму вашей записи:",
+                await reset_sost(state)
+            ),
             "ADD_TRANSACTION": (
                 trasaction_actions,
                 await get_transaction_keyboard()
@@ -87,14 +95,15 @@ async def go_back(message: Message, state: FSMContext):
                 trasaction_actions,
                 await add_back_button(await get_transaction_keyboard())
             ),
-            "AFTER_ADD": (
-                cattegory_text,
-                await add_back_button(await get_categories_keyboard())
-            ),
             "NOT_SKIP_TRANSACTIONS": (
                 trasaction_actions,
                 await add_back_button(await get_transaction_keyboard())
             ),
+            "TWO_SKIP": (
+                "🔄 Хорошо! Давайте изменим тип вашей категории 😊",
+                await make_type_keyboard()
+            ),
+
             "handle_text_input": (
                 f"✨ Введите новое название для категории '{user_data.get(user_id, {}).get('current_category', 'неизвестно')}' или пропустите:",
                 await add_back_button(await make_skip_keyboard())
@@ -123,3 +132,8 @@ async def start_handler(message: Message, state: FSMContext):
         )
     except Exception as e:  
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
+
+async def reset_sost(state:FSMContext):
+    await state.clear()
+    await state.set_state(TransactionStates.waiting_for_transaction_description)

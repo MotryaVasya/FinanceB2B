@@ -16,6 +16,7 @@ class TransactionStates(StatesGroup):
 class CategoryStates(StatesGroup):
     waiting_for_category_name = State()
     waiting_for_category_type = State()
+    waiting_for_save_confirmation = State()
     new_category_name= State()
     first= State()
     second= State()
