@@ -13,20 +13,6 @@ router=Router()
 abb=["1","2","3","4","5","6","7","8"]
 abo=["1","2"]
 avtobus=["","","",""]
-def is_valid_string(s):
-    # Проверяем, содержит ли строка что-либо кроме цифр
-    if re.search(r'[^\d]', s):
-        # Проверяем конкретные запрещенные категории
-        if re.search(r'[а-яА-Яa-zA-Z]', s):  # Буквы
-            return False, "Строка содержит буквы"
-        if re.search(r'[@#$%^&*()_+=\[\]{};:\'",<>/?\\|`~]', s):  # Спецсимволы
-            return False, "Строка содержит специальные символы"
-        if ' ' in s:  # Пробелы
-            return False, "Строка содержит пробелы"
-        if re.search(r'[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF\U0001F700-\U0001F77F\U0001F780-\U0001F7FF\U0001F800-\U0001F8FF\U0001F900-\U0001F9FF\U0001FA00-\U0001FA6F\U0001FA70-\U0001FAFF\U00002702-\U000027B0]', s):
-            return False, "Строка содержит смайлики или другие значки"
-        return False, "Строка содержит недопустимые символы"
-    return True, "Строка валидна"
 
 @router.message(or_f(F.text == "Добaвить запись"))
 async def add_transaction_handler(message: Message, state: FSMContext):
