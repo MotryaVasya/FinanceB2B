@@ -315,9 +315,14 @@ async def get_all_transactions(session: AsyncSession, skip: int = 0, limit: int 
             - произошла ошибка при запросе
     """
     try:
-        result = await session.execute(select(Transaction).offset(skip).limit(limit))
-        transactions = result.scalars().all()
-        return [transaction.to_pydantic() for transaction in transactions] or []
+        result = await session.execute(
+            select(Transaction, Category.name_category.label("name_category"))
+            .join(Category, Transaction.category_id == Category.id)
+            .offset(skip)
+            .limit(limit)
+        )
+        transactions = result.all()
+        return [transaction.to_pydantic(category_name=name_category) for transaction, name_category in transactions] or []
     except (SQLAlchemyError) as e:
         logging.error(json.dumps({
             "message": "Ошибка получения списка транзакций",

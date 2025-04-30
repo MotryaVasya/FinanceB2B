@@ -88,12 +88,13 @@ class Transaction(Base):
     category: Mapped["Category"] = relationship(back_populates="transactions")
     user: Mapped["User"] = relationship(back_populates="transactions")
 
-    def to_pydantic(self) -> TransactionOut:
+    def to_pydantic(self, category_name: Optional[str] = None) -> TransactionOut:
         return TransactionOut(
             id=self.id,
             description=self.description,
             full_sum=float(self.full_sum),
             date=self.date,  
             category_id=self.category_id,
-            user_id=self.user_id
+            user_id=self.user_id,
+            category_name=category_name
         )

@@ -21,7 +21,7 @@ class TransactionUpdate(BaseModel):
 class TransactionOut(TransactionBase):
     id: int
     date: datetime
-
+    category_name: Optional[str] = None 
     model_config = ConfigDict(
         from_attributes=True,
         json_encoders={
