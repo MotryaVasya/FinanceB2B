@@ -8,8 +8,40 @@ from aiogram.fsm.context import FSMContext
 from project.bot.keyboards.reply import *
 from project.bot.states import *
 from project.bot.Save import save
-
+from aiogram.types import Message, CallbackQuery
+import project.bot.conecting_methods.user as user
 router = Router()
+
+@router.message(or_f(CommandStart(), Command("restart")))
+async def start(message: Message, state: FSMContext):
+    await start_handler(message, state, True)
+
+@router.callback_query(F.data == 'back_to_menu')
+async def back_to_menu(callback: CallbackQuery, state: FSMContext):
+    await start_handler(callback.message, state, False)
+
+async def start_handler(message: Message, state: FSMContext, is_start: bool = False):
+    try:
+        if is_start:
+            data = {'firstname': message.from_user.first_name, 
+                    'secondname': message.from_user.last_name, 
+                    'tg_id': message.from_user.id,
+                    'cash': 0}
+
+            await user.create_user(data=data)
+                
+            await message.answer(
+                welcome_text,
+                reply_markup=await start_keyboard()
+            )
+            return
+        
+        await message.answer(
+                '🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊',
+                reply_markup=await start_keyboard()
+            )
+    except Exception as e:  
+        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
 
 @router.message(F.text == "Назад")
 async def go_back(message: Message, state: FSMContext):
@@ -119,21 +151,7 @@ async def go_back(message: Message, state: FSMContext):
     else:
         await message.answer("Некуда возвращаться.", reply_markup=await start_keyboard())
 
-    
-@router.message(or_f(CommandStart(), Command("restart")))
-async def start_handler(message: Message, state: FSMContext):
-    try:
-        user_id = message.from_user.id
-        open("menu.txt","w").write(str(await save.update(user_id, "MENU")))
-        open("main44.txt","w").write(str(await save.convert_to_json()))
-        await message.answer(
-            welcome_text,
-            reply_markup=await start_keyboard()
-        )
-    except Exception as e:  
-        print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
-
-
 async def reset_sost(state:FSMContext):
     await state.clear()
     await state.set_state(TransactionStates.waiting_for_transaction_description)
+

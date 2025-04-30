@@ -290,7 +290,7 @@ async def get_transaction(session: AsyncSession, transaction_id: int, as_pydanti
         }))
         return None
 
-async def get_all_transactions(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
+async def get_all_transactions(user_id: int, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
     """
     Получает список транзакций с диапозоном.
 
@@ -315,9 +315,11 @@ async def get_all_transactions(session: AsyncSession, skip: int = 0, limit: int 
             - произошла ошибка при запросе
     """
     try:
+        user_id_subquery = select(User.id).where(User.tg_id == user_id).scalar_subquery()
         result = await session.execute(
             select(Transaction, Category.name_category.label("name_category"))
             .join(Category, Transaction.category_id == Category.id)
+            .where(Transaction.user_id == user_id_subquery)
             .offset(skip)
             .limit(limit)
         )
