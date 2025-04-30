@@ -1,5 +1,3 @@
-# project/bot/handlers/statistic.py
-
 from datetime import datetime
 import httpx
 import logging
@@ -114,7 +112,12 @@ async def show_statistic_menu(message: types.Message):
     """Отображает меню выбора типа статистики."""
     try:
         text = await statistic_text_start()
-        await message.answer(text, reply_markup=statistic_keyboard) # Убедитесь, что эта клавиатура без кнопки "Меню"
+        # Создаем клавиатуру с кнопками "За период" и "За месяц" в одном ряду
+        keyboard = [
+            [KeyboardButton(text="За период"), KeyboardButton(text="За месяц")],
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+        await message.answer(text, reply_markup=reply_markup)
     except Exception as e:
         logging.error(f"Ошибка отображения меню статистики: {e}")
         await message.answer("Произошла ошибка при показе меню статистики.")
@@ -145,7 +148,7 @@ async def show_month_choice(message: types.Message):
 async def go_to_main_menu(message: types.Message):
     """Возвращает пользователя в главное меню."""
     await message.answer(
-        "Возвращаемся в главное меню.",
+        "🔙 Возвращаемся в главное меню!\nЧем займёмся дальше? 😊",
         reply_markup=await start_keyboard() # Показываем основную реплай-клавиатуру
     )
 # -----------------------------------------------------------------------
@@ -299,7 +302,7 @@ async def select_year(callback: types.CallbackQuery):
                 logging.info(f"Successfully displayed period stats for user {user_id} and cleared state.")
                 del user_period[user_id] # Очищаем состояние после успешного получения статистики
 
-  
+            
 
             except (KeyError, ValueError) as e:
                 logging.error(f"Data or API response error for period stats user {user_id}: {e}. Current state: {user_period.get(user_id)}")
