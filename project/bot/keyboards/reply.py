@@ -309,3 +309,63 @@ async def aboba_keyboard() -> ReplyKeyboardMarkup:
 async def None_keyboard() -> ReplyKeyboardMarkup:
     builder=ReplyKeyboardBuilder()
     builder.add()
+
+async def Del_from_trans()-> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Подтвердить удаление записи"),
+            KeyboardButton(text="Отменить удаление записи"),
+        )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
+async def cansel_del_from_trans()-> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Вернутся к списку ваших записей"),
+            KeyboardButton(text="Вернутся к меню"),
+        )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
+async def skip_update_from_trans()-> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Пропустить изменение категории"),
+        )
+    builder.adjust(1)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
+async def skip_update_desk_from_trans()-> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Пропустить описание записи"),
+        )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)
+async def skip_update_amount_from_trans()-> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    builder.add(
+            KeyboardButton(text="Пропустить изменение суммы"),
+        )
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return keyboard
+
+async def from_trans_skip_or_date()-> ReplyKeyboardMarkup:
+    """Клавиатура для выбора типа"""
+    builder = ReplyKeyboardBuilder()
+    for name in months:
+        builder.add(
+            KeyboardButton(text=name)
+            )
+    builder.add(KeyboardButton(text="Пропустить изменение даты"))
+    builder.adjust(2)
+    keyboard = builder.as_markup(resize_keyboard=True)
+    return await add_back_button(keyboard)

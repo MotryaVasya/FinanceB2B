@@ -11,7 +11,15 @@ class TransactionStates(StatesGroup):
     waiting_for_transaction_amount = State()
     in_transactions=State()
     wait_date=State()
-
+    wait_date_update=State()
+    in_del=State()
+    in_add=State()
+    in_update=State()
+    in_update_name=State()
+    in_update_cat=State()
+    update_for_transaction_description = State()
+    update_for_transaction_amount=State()
+    update_no_sets=State()
 
 class CategoryStates(StatesGroup):
     waiting_for_category_name = State()
