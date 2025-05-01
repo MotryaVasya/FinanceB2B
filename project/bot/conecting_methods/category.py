@@ -2,10 +2,10 @@ import logging
 import httpx
 from project.core.request_conf import *
 
-async def create_category(data: dict):
+async def create_category(data: dict, params: dict):
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(f'{URL}{CATEGORIES}', json=data)
+            response = await client.post(f'{URL}{CATEGORIES}', params=params, json=data)
             response.raise_for_status()
             if response.status_code == 200:
                 category = response.json()

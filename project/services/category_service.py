@@ -15,7 +15,7 @@ from project.db.crud import category as crud
 from project.db.schemas.category import CategoryCreate, CategoryUpdate
 from project.db.models.category import Category # TODO потом поменять импорт из category
 
-async def create(session: AsyncSession, data: CategoryCreate)-> Category | None:
+async def create(user_id: int, session: AsyncSession, data: CategoryCreate)-> Category | None:
     """Создает новую категорию.
 
     Args:
@@ -25,7 +25,7 @@ async def create(session: AsyncSession, data: CategoryCreate)-> Category | None:
     Returns:
         Созданный объект категории или None при ошибке
     """
-    return await crud.create_category(session, data)
+    return await crud.create_category(user_id, session, data)
 
 async def get(session: AsyncSession, category_id: int) -> Category | None:
     """Получает категорию по идентификатору.
@@ -39,7 +39,7 @@ async def get(session: AsyncSession, category_id: int) -> Category | None:
     """
     return await crud.get_category(session, category_id)
 
-async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
+async def get_all(user_id: int, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
     """Получает список категорий с пагинацией.
     
     Args:
@@ -50,7 +50,7 @@ async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> lis
     Returns:
         Список категорий (может быть пустым)
     """
-    return await crud.get_all_categories(session, skip, limit)
+    return await crud.get_all_categories(user_id, session, skip, limit)
 
 async def update(session: AsyncSession, category_id: int, data: CategoryUpdate) -> Category | None:
     """Обновляет данные категории.
