@@ -1,8 +1,15 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
-from project.bot.conecting_methods.category import create_category, delete_category, get_categories, update_category
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
+from project.bot.conecting_methods.category import create_category, delete_category, get_categories, get_category, update_category
 from project.bot.conecting_methods.methods import check_category_action
-from project.bot.keyboards.inline_categories import build_pagination_keyboard_for_delete, build_pagination_keyboard_for_show, build_pagination_keyboard_for_update, choose_buttons_delete, choose_buttons_update, confirm_back_cancel, confirm_or_cancel_buttons, income_expence_back_cancel
+from project.bot.keyboards.inline_categories import (build_pagination_keyboard_for_delete, 
+                                                     build_pagination_keyboard_for_show, 
+                                                     build_pagination_keyboard_for_update, 
+                                                     choose_buttons_delete, 
+                                                     choose_buttons_update, 
+                                                     confirm_back_cancel, 
+                                                     confirm_or_cancel_buttons, 
+                                                     income_expence_back_cancel)
 from project.bot.states import *
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
@@ -59,10 +66,14 @@ async def start_add_category(message: Message, state: FSMContext):
     
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text="❌ Отмена", callback_data="cancel_creation")
-    
     await message.answer(
         "Введите название новой категории:",
         reply_markup=keyboard.as_markup()
+    )
+    # Затем отправляем сообщение с инлайн-клавиатурой
+    await message.answer(
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
     )
 
 @router.message(CategoryForm.name)
@@ -112,10 +123,10 @@ async def confirm_creation(callback: CallbackQuery, state: FSMContext):
         }
         
         await create_category(category_data, {"user_id": user_id})
-        await callback.message.edit_text(
+        await callback.message.answer(
             f"✅ Категория успешно создана!\n\n"
             f"Название: {data['name']}\n"
-            f"Тип: {'Доход' if data['type'] == 1 else 'Расход'}"
+            f"Тип: {'Доход' if data['type'] == 1 else 'Расход'}", reply_markup=await start_keyboard()
         )
     except Exception as e:
         await callback.message.answer(
@@ -158,7 +169,7 @@ async def back_to_type_step(callback: CallbackQuery, state: FSMContext):
 async def cancel_creation(callback: CallbackQuery, state: FSMContext):
     """Отмена создания категории"""
     await state.clear()
-    await callback.message.edit_text("❌ Создание категории отменено")
+    await callback.message.answer("❌ Создание категории отменено", reply_markup=await start_keyboard())
     await callback.answer()
 # ----------------------------------------------------------- end add_category
 
@@ -173,6 +184,10 @@ async def show_category(message: Message, state: FSMContext):
         message_text, total_pages = await get_paginated_category(user_id, 0, True)
         keyboard = await build_pagination_keyboard_for_show(0, total_pages, user_id)
         await message.answer(message_text, reply_markup=keyboard)
+        await message.answer(
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
+    )
     except Exception as e:
         await message.answer(f"Ошибка при получении категории: {e}")
 
@@ -226,6 +241,17 @@ async def format_categories_page(categories: list, page: int) -> str:
     
     return message
 
+async def income_expence_back_cancel_keep():
+    """Клавиатура для выбора типа с кнопкой 'Оставить как есть'"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.button(text="Доход", callback_data="type_1")
+    keyboard.button(text="Расход", callback_data="type_2")
+    keyboard.button(text="◀ Назад", callback_data="back_to_name_update")
+    keyboard.button(text="❌ Отмена", callback_data="cancel_update")
+    keyboard.button(text="Оставить текущий", callback_data="keep_type")
+    keyboard.adjust(2, 2, 1)
+    return keyboard
+
 async def confirm_back_cancel_for_update():
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text="✅ Подтвердить", callback_data="confirm_update")
@@ -258,6 +284,10 @@ async def start_update_category(message: Message, state: FSMContext):
         keyboard = await build_pagination_keyboard_for_update(0, total_pages, user_id)
         
         await message.answer(message_text, reply_markup=keyboard)
+        await message.answer(
+            "⬆️⬆️",
+            reply_markup=ReplyKeyboardRemove()
+        )
     except Exception as e:
         await message.answer(f"Ошибка при получении категорий: {e}")
 
@@ -339,10 +369,11 @@ async def select_category_for_update(callback: CallbackQuery, state: FSMContext)
         
         keyboard = InlineKeyboardBuilder()
         keyboard.button(text="◀ Назад", callback_data=f"categoryU_back_{callback.from_user.id}")
+        keyboard.button(text="Оставить как есть", callback_data="keep_name")
         
         await callback.message.edit_text(
             text=f"Выбрана категория: {category_name}\n\n"
-                 "Введите новое название категории:",
+                 "Введите новое название категории или нажмите 'Оставить как есть':",
             reply_markup=keyboard.as_markup()
         )
         await callback.answer()
@@ -351,15 +382,29 @@ async def select_category_for_update(callback: CallbackQuery, state: FSMContext)
         print(f"Error in select_category_for_update: {e}")
         await callback.answer("Ошибка при выборе категории")
 
+@router.callback_query(F.data == "keep_name", UpdateCategoryForm.new_name)
+async def keep_current_name(callback: CallbackQuery, state: FSMContext):
+    """Обработка сохранения текущего названия"""
+    data = await state.get_data()
+    await state.update_data(new_name=data['current_name'])
+    await state.set_state(UpdateCategoryForm.new_type)
+    
+    keyboard = await income_expence_back_cancel_keep()
+    await callback.message.edit_text(
+        "Выберите новый тип категории или оставьте текущий:",
+        reply_markup=keyboard.as_markup()
+    )
+    await callback.answer()
+
 @router.message(UpdateCategoryForm.new_name)
 async def process_new_name(message: Message, state: FSMContext):
     """Обработка нового названия категории"""
     await state.update_data(new_name=message.text)
     await state.set_state(UpdateCategoryForm.new_type)
     
-    keyboard = await income_expence_back_cancel()
+    keyboard = await income_expence_back_cancel_keep()
     await message.answer(
-        "Выберите новый тип категории:",
+        "Выберите новый тип категории или оставьте текущий:",
         reply_markup=keyboard.as_markup()
     )
 
@@ -379,6 +424,28 @@ async def process_new_type(callback: CallbackQuery, state: FSMContext):
         f"Текущее название: {data['current_name']}\n"
         f"Новое название: {data['new_name']}\n"
         f"Новый тип: {category_type}\n\n"
+        f"Подтверждаете изменения?",
+        reply_markup=keyboard.as_markup()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "keep_type", UpdateCategoryForm.new_type)
+async def keep_current_type(callback: CallbackQuery, state: FSMContext):
+    """Обработка сохранения текущего типа"""
+    data = await state.get_data()
+    # Получаем текущий тип категории из базы данных
+    category = await get_category(data['category_id'])
+    await state.update_data(new_type=category['type'])
+    await state.set_state(UpdateCategoryForm.confirmation)
+    
+    category_type = "Доход" if category['type'] == 1 else "Расход"
+    
+    keyboard = await confirm_back_cancel_for_update()
+    await callback.message.edit_text(
+        f"Проверьте новые данные:\n\n"
+        f"Текущее название: {data['current_name']}\n"
+        f"Новое название: {data['new_name']}\n"
+        f"Тип остался без изменений: {category_type}\n\n"
         f"Подтверждаете изменения?",
         reply_markup=keyboard.as_markup()
     )
@@ -417,28 +484,15 @@ async def confirm_update_category(callback: CallbackQuery, state: FSMContext):
     """Подтверждение обновления категории"""
     try:
         data = await state.get_data()
-        user_id = callback.from_user.id
-        
         update_data = {
             "name_category": data['new_name'],
             "type": data['new_type']
         }
         
         await update_category(data['category_id'], update_data)
-        
-        # Обновляем список категорий
-        all_categories = await get_categories(user_id)
-        user_categories = [cat for cat in all_categories if cat.get('user_id')]
-        
-        # Возвращаемся к списку
-        current_page = user_pages.get(user_id, 0)
-        message_text = await format_categories_page(user_categories, current_page)
-        total_pages = max(1, (len(user_categories) + PAGE_SIZE - 1) // PAGE_SIZE)
-        keyboard = await build_pagination_keyboard_for_update(current_page, total_pages, user_id)
-        
-        await callback.message.edit_text(
-            text=f"✅ Категория успешно обновлена!\n\n{message_text}",
-            reply_markup=keyboard
+        await callback.message.answer(
+            text=f"✅ Категория успешно обновлена!",
+            reply_markup=await start_keyboard()
         )
         await state.clear()
         await callback.answer()
@@ -453,17 +507,9 @@ async def confirm_update_category(callback: CallbackQuery, state: FSMContext):
 async def cancel_update_category(callback: CallbackQuery, state: FSMContext):
     """Отмена обновления категории"""
     try:
-        data = await state.get_data()
-        user_categories = data.get('all_categories', [])
-        current_page = user_pages.get(callback.from_user.id, 0)
-        
-        message_text = await format_categories_page(user_categories, current_page)
-        total_pages = max(1, (len(user_categories) + PAGE_SIZE - 1) // PAGE_SIZE)
-        keyboard = await build_pagination_keyboard_for_update(current_page, total_pages, callback.from_user.id)
-        
-        await callback.message.edit_text(
-            text="❌ Обновление отменено\n\n" + message_text,
-            reply_markup=keyboard
+        await callback.message.answer(
+            text="❌ Обновление отменено\n\n",
+            reply_markup=await start_keyboard()
         )
         await state.clear()
         await callback.answer()
@@ -497,6 +543,10 @@ async def start_delete_category(message: Message, state: FSMContext):
         keyboard = await build_pagination_keyboard_for_delete(0, total_pages, user_id)
         
         await message.answer(message_text, reply_markup=keyboard)
+        await message.answer(
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
+    )
     except Exception as e:
         await message.answer(f"Ошибка при получении категорий: {e}")
 
@@ -607,15 +657,10 @@ async def confirm_delete_category(callback: CallbackQuery, state: FSMContext):
         user_categories = [cat for cat in all_categories if cat.get('user_id')]
         await state.update_data(all_categories=user_categories)
         
-        # Возвращаемся к списку категорий
-        current_page = user_pages.get(user_id, 0)
-        message_text = await format_categories_page(user_categories, current_page)
-        total_pages = max(1, (len(user_categories) + PAGE_SIZE - 1) // PAGE_SIZE)
-        keyboard = await build_pagination_keyboard_for_delete(current_page, total_pages, user_id)
         
-        await callback.message.edit_text(
-            text=f"✅ Категория '{data['category_name']}' успешно удалена!\n\n" + message_text,
-            reply_markup=keyboard
+        await callback.message.answer(
+            text=f"✅ Категория '{data['category_name']}' успешно удалена!\n\n",
+            reply_markup=await start_keyboard()
         )
         await callback.answer()
         
@@ -630,22 +675,30 @@ async def confirm_delete_category(callback: CallbackQuery, state: FSMContext):
 async def cancel_delete_category(callback: CallbackQuery, state: FSMContext):
     """Отмена удаления категории"""
     try:
-        data = await state.get_data()
-        user_categories = data.get('all_categories', [])
-        current_page = user_pages.get(callback.from_user.id, 0)
-        
-        message_text = await format_categories_page(user_categories, current_page)
-        total_pages = max(1, (len(user_categories) + PAGE_SIZE - 1) // PAGE_SIZE)
-        keyboard = await build_pagination_keyboard_for_delete(current_page, total_pages, callback.from_user.id)
-        
-        await callback.message.edit_text(
-            text="❌ Удаление отменено\n\n" + message_text,
-            reply_markup=keyboard
+        await callback.message.answer(
+            text="❌ Удаление отменено\n\n",
+            reply_markup=await start_keyboard()
         )
         await callback.answer()
-        
+        await state.clear()
     except Exception as e:
         print(f"Error in cancel_delete_category: {e}")
         await callback.message.edit_text("❌ Удаление отменено")
         await callback.answer()
 # ----------------------------------------------------------- start delete
+
+@router.callback_query(F.data == "cancel")
+async def cancel(callback: CallbackQuery, state: FSMContext):
+    try:
+        await callback.message.answer(
+            text="❌ Вы вернулись назад\n\n",
+            reply_markup=await start_keyboard()
+        )
+        await state.clear()
+        await callback.answer()
+    
+    except Exception as e:
+        print(f"Error in cancel_update_category: {e}")
+        await callback.message.edit_text("❌ Обновление отменено")
+        await state.clear()
+        await callback.answer()
