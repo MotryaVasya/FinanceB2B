@@ -2,6 +2,7 @@ from aiogram import Router, F
 import re
 from aiogram.filters import or_f,StateFilter,and_f
 from aiogram.types import Message, CallbackQuery,ReplyKeyboardRemove
+from project.bot.conecting_methods.methods import check_action
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
 from project.bot.states import *
@@ -9,6 +10,13 @@ from project.bot.keyboards.reply import *
 from project.bot.Save import save
 from datetime import datetime
 import calendar
+
+from project.bot.conecting_methods.transactions import delete_transaction, get_transactions
+from project.bot.messages.mesage_transaction import PAGE_SIZE, get_paginated_transactions
+from project.bot.keyboards.inline_transactions import (back_menu_or_list_transactions,
+                                                       build_pagination_keyboard_for_delete, build_pagination_keyboard_for_show, confirm_or_cancel_buttons)
+from project.bot.messages.mesage_transaction import user_pages
+
 router=Router()
 abb=["1","2","3","4","5","6","7","8"]
 abo=["1","2"]
@@ -242,56 +250,145 @@ async def set_type(message: Message, state: FSMContext):
 
 
 
-@router.message(or_f(F.text == "Удалить запись",F.text=="Вернутся к списку ваших записей"))
-async def del_transaction_handler(message: Message, state: FSMContext):
-    try:
-        await state.set_state(TransactionStates.in_del)
-        await message.answer(
-            "🙂 Вот список ваших записей! Какую из них хотите удалить?\n"        
-            "1. боба\n"
-            "2. биба\n"
-            "итп.\n",
-                            )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+@router.message(F.text == 'Удалить запись')
+async def delete_transaction_message(message: Message, state: FSMContext):
+    await handle_delete_flow(message.from_user.id, message, state)
 
-@router.message(StateFilter(TransactionStates.in_del))
-async def del_after_choos(message: Message, state: FSMContext):
-    try:
-        await state.clear()
-        await message.answer(
-            "❗️Вы уверены, что хотите удалить эту запись?\n",
-            reply_markup= await Del_from_trans(),
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+@router.callback_query(F.data == 'back_to_list_transactions')
+async def back_to_list_callback(callback: CallbackQuery, state: FSMContext):
+    await handle_delete_flow(callback.from_user.id, callback.message, state)
 
-@router.message(F.text=="Подтвердить удаление записи")
-async def del_conf_choos(message: Message, state: FSMContext):
+async def handle_delete_flow(user_id: int, message: Message, state: FSMContext):
+    user_pages[user_id] = 0
+    
     try:
-        await message.answer(
-            "🗑 Готово! Ваша запись успешно удалена 😊\n"
-            "🔙 Возвращаемся в главное меню!\n",
-            reply_markup=await start_keyboard(),
-        )
+        message_text, total_pages = await get_paginated_transactions(user_id, 0)
+        keyboard = await build_pagination_keyboard_for_delete(0, total_pages, user_id)
+        await message.answer('🙂 Вот список ваших записей! Какую из них хотите удалить?\n\n'+message_text,
+                           reply_markup=keyboard)
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        await message.answer(f"Ошибка при получении транзакций: {e}")
 
-@router.message(F.text=="Отменить удаление записи")
-async def del_conf_choos(message: Message, state: FSMContext):
+@router.callback_query(F.data.startswith("transactionD_"))
+async def handle_pagination_for_delete(callback: CallbackQuery, state: FSMContext):
     try:
-        await message.answer(
-            "🙂 Хотите удалить другую запись или вернуться в главное меню?\n",
-            reply_markup=await cansel_del_from_trans(),
+        data_parts = callback.data.split('_')
+        action = data_parts[1]
+        user_id = int(data_parts[2])
+        current_page = user_pages.get(user_id, 0)
+        all_transactions = await get_transactions(user_id)
+        total_pages = (len(all_transactions) + PAGE_SIZE - 1) // PAGE_SIZE
+        
+        # Остальная логика пагинации...
+        new_page = await check_action(
+            action=action,
+            total_pages=total_pages,
+            current_page=current_page,
+            callback=callback,
+            state=state,
+            for_delete=True,
+            all_transactions=all_transactions,
+            user_id=user_id
         )
+        if new_page is None:  
+            return
+            
+        user_pages[user_id] = new_page
+        message_text, total_pages = await get_paginated_transactions(user_id, new_page)
+        keyboard = await build_pagination_keyboard_for_delete(new_page, total_pages, user_id)
+        
+        await state.update_data(original_message=message_text)
+        await callback.message.edit_text(text=message_text, reply_markup=keyboard)
+        await callback.answer()
+        
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
-@router.message(F.text=="Вернутся к меню")
-async def del_conf_choose(message: Message, state: FSMContext):
+        print(f"Ошибка пагинации: {e}")
+        await callback.answer("Произошла ошибка, попробуйте позже")
+
+@router.callback_query(F.data.startswith("select_transactionD_"))
+async def handle_transaction_selection_for_delete(callback: CallbackQuery, state: FSMContext):
+    transaction_id = int(callback.data.split('_')[2])
+    transaction_name = str(callback.data.split('_')[3])
+    await state.update_data(selected_transaction_id=transaction_id)
+    await state.update_data(selected_transaction_name=transaction_name)
+
+    # Получаем оригинальное сообщение
+    data = await state.get_data()
+    original_message = data.get('original_message', "Список транзакций")
+
+    # Создание клавиатуры через билдер
+    builder = await confirm_or_cancel_buttons()
+
+    await callback.message.edit_text(
+        text=f"{original_message}\n\n"
+             f"Выбрана транзакция : '{transaction_name}'\n"
+             "❗️Вы уверены, что хотите удалить эту запись?",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "confirm_delete")
+async def confirm_delete_transaction(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    transaction_id = data.get("selected_transaction_id")
+    transaction_name = data.get("selected_transaction_name")
+
+    if transaction_id is not None:
+        res = await delete_transaction(transaction_id)
+        if res:
+            await callback.message.answer(
+                text=f"🗑 Готово! Ваша запись успешно удалена 😊\n🔙 Возвращаемся в главное меню!",
+                reply_markup=await start_keyboard()
+            )
+            
+    else:
+        await callback.message.edit_text("⚠️ Ошибка: ID транзакции не найден.")
+
+    await callback.answer()
+    await state.clear()
+
+@router.callback_query(F.data == "cancel_delete")
+async def cancel_delete_transaction(callback: CallbackQuery, state: FSMContext):
+    builder = await back_menu_or_list_transactions()
+    await callback.message.answer("🙂 Хотите удалить другую запись или вернуться в главное меню?",
+            reply_markup=builder.as_markup())
+    await state.clear()
+
+
+
+
+@router.message(F.text == 'История моих записей')
+async def show_transactions(message: Message):
+    user_id = message.from_user.id
+    user_pages[user_id] = 0  # Сбрасываем на первую страницу
+    
     try:
-        await message.answer(
-            "🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊\n",
-            reply_markup=await start_keyboard(),
-        )
+        message_text, total_pages = await get_paginated_transactions(user_id, 0)
+        keyboard = await build_pagination_keyboard_for_show(0, total_pages, user_id)
+        await message.answer('📂 Вот список всех записей😊 :\n\n'+message_text, reply_markup=keyboard)
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        await message.answer(f"Ошибка при получении транзакций: {e}")
+
+@router.callback_query(F.data.startswith("transactions_"))
+async def handle_pagination_for_show(callback: CallbackQuery):
+    try:
+        data_parts = callback.data.split('_')
+        action = data_parts[1]
+        user_id = int(data_parts[2])
+        current_page = user_pages.get(user_id, 0)
+        all_transactions = await get_transactions(user_id)
+        total_pages = (len(all_transactions) + PAGE_SIZE - 1) // PAGE_SIZE
+        
+        # Определяем новую страницу
+        new_page = await check_action(action=action, total_pages=total_pages, current_page=current_page, callback=callback)
+        
+        user_pages[user_id] = new_page
+        message_text, total_pages = await get_paginated_transactions(user_id, new_page)
+        keyboard = await build_pagination_keyboard_for_show(new_page, total_pages, user_id)
+        
+        await callback.message.edit_text(message_text, reply_markup=keyboard)
+        await callback.answer()
+    
+    except Exception as e:
+        print(f"Ошибка пагинации: {e}")
+        await callback.answer(f"Произошла ошибка, попробуйте позже")

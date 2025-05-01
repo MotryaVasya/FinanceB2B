@@ -90,7 +90,7 @@ async def get_user(session: AsyncSession, user_id: int) -> User | None:
     if user_id <= 0:
         return None
     try:
-        user = await session.execute(select(User).where(User.id == user_id))
+        user = await session.execute(select(User).where(User.tg_id == user_id))
         return user.scalar_one_or_none()
     except (NoResultFound, DatabaseError) as e:
         logging.error(json.dumps({

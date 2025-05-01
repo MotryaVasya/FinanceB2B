@@ -33,7 +33,7 @@ async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends
         }))
 
 @router.get('/', response_model=list[TransactionOut])
-async def get_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def get_transactions(user_id: int, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     """
     Получает список всех транзакций с поддержкой пагинации.
 
@@ -46,7 +46,7 @@ async def get_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = D
         list[TransactionOut]: Список транзакций.
     """
     try:
-        return await transaction_service.get_all(db, skip, limit)
+        return await transaction_service.get_all(user_id, db, skip, limit)
     except HTTPException:
         raise
     except Exception as e:
