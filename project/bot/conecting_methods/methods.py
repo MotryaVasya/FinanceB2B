@@ -1,9 +1,13 @@
+from typing import Optional
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from project.bot.keyboards.inline_transactions import build_pagination_keyboard_for_delete, build_pagination_keyboard_for_update, choose_buttons_delete, choose_buttons_update
+from project.bot.keyboards import (
+    inline_transactions,
+    inline_categories
+)
 
-from project.bot.messages.mesage_transaction import PAGE_SIZE, get_paginated_transactions
+from project.bot.messages.mesage_transaction import PAGE_SIZE, get_paginated_transactions, get_paginated_category
 
 
 async def check_action(action: str, 
@@ -65,7 +69,7 @@ async def check_action(action: str,
                 start_idx = current_page * PAGE_SIZE
                 page_transactions = all_transactions[start_idx:start_idx + PAGE_SIZE]
                 
-                builder = await choose_buttons_delete(user_id, page_transactions)
+                builder = await inline_transactions.choose_buttons_delete(user_id, page_transactions)
                 await state.update_data(original_message=callback.message.text)
                 
                 await callback.message.edit_text(
@@ -77,7 +81,7 @@ async def check_action(action: str,
             elif action == "back":
                 data = await state.get_data()
                 original_message = data.get('original_message', "Список транзакций")
-                keyboard = await build_pagination_keyboard_for_delete(current_page, total_pages, user_id)
+                keyboard = await inline_transactions.build_pagination_keyboard_for_delete(current_page, total_pages, user_id)
                 await callback.message.edit_text(text=original_message, reply_markup=keyboard)
                 return None
             
@@ -89,7 +93,7 @@ async def check_action(action: str,
                 start_idx = current_page * PAGE_SIZE
                 page_transactions = all_transactions[start_idx:start_idx + PAGE_SIZE]
                 
-                builder = await choose_buttons_update(user_id, page_transactions)
+                builder = await inline_transactions.choose_buttons_update(user_id, page_transactions)
                 
                 await callback.message.edit_text(
                     text=callback.message.text + "\n\nВыберите транзакцию для обновления:",
@@ -104,7 +108,7 @@ async def check_action(action: str,
                 original_message = data.get('original_message', "Список транзакций")
                 
                 message_text, total_pages = await get_paginated_transactions(user_id, current_page)
-                keyboard = await build_pagination_keyboard_for_update(current_page, total_pages, user_id)
+                keyboard = await inline_transactions.build_pagination_keyboard_for_update(current_page, total_pages, user_id)
                 
                 await callback.message.edit_text(
                     text=original_message,
@@ -134,3 +138,103 @@ async def check_action(action: str,
         print(f"Ошибка в check_action: {e}")
         await callback.answer("Ошибка обработки действия")
         return current_page
+    
+
+async def check_category_action(
+    action: str,
+    total_pages: int,
+    current_page: int,
+    callback: CallbackQuery,
+    state: FSMContext = None,
+    for_update: bool = False,
+    for_delete: bool = False,
+    categories_list: list = None,
+    user_id: int = None
+) -> Optional[int]:
+    """Обрабатывает действия для категорий (пагинация и выбор)"""
+    try:
+        if for_delete:
+            if action == "choose":
+                if not categories_list:
+                    await callback.answer("Нет категорий для выбора")
+                    return current_page
+                
+                start_idx = current_page * PAGE_SIZE
+                page_categories = categories_list[start_idx:start_idx + PAGE_SIZE]
+                
+                builder = await inline_transactions.choose_buttons_delete(user_id, page_categories)
+                await state.update_data(original_message=callback.message.text)
+                
+                await callback.message.edit_text(
+                    text=f"{callback.message.text}\n\nВыберите категорию для удаления:",
+                    reply_markup=builder.as_markup()
+                )
+                return None
+                
+            elif action == "back":
+                data = await state.get_data()
+                original_message = data.get('original_message', "Список категорий")
+                keyboard = await inline_transactions.build_pagination_keyboard_for_delete(current_page, total_pages, user_id)
+                await callback.message.edit_text(text=original_message, reply_markup=keyboard)
+                return None
+            
+        elif for_update:
+            if action == "choose":
+                await state.update_data(original_message=callback.message.text)
+                
+                start_idx = current_page * PAGE_SIZE
+                page_categories = categories_list[start_idx:start_idx + PAGE_SIZE]
+                
+                builder = await inline_categories.choose_buttons_update(user_id, page_categories)
+                
+                await callback.message.edit_text(
+                    text=callback.message.text + "\n\nВыберите категорию для обновления:",
+                    reply_markup=builder.as_markup()
+                )
+                await callback.answer()
+                return None
+            
+            elif action == "back":
+                data = await state.get_data()
+                original_message = data.get('original_message', "Список категорий")
+                
+                message_text, total_pages = await get_paginated_category(user_id, current_page, False)
+                keyboard = await inline_categories.build_pagination_keyboard_for_update(current_page, total_pages, user_id)
+                
+                await callback.message.edit_text(
+                    text=original_message,
+                    reply_markup=keyboard
+                )
+                await callback.answer()
+                return None
+        
+        return await handle_pagination(action, total_pages, current_page, callback)
+        
+    except Exception as e:
+        print(f"Ошибка в check_category_action: {e}")
+        await callback.answer("Ошибка обработки действия")
+        return current_page
+
+
+async def handle_pagination(
+    action: str,
+    total_pages: int,
+    current_page: int,
+    callback: CallbackQuery
+) -> Optional[int]:
+    """Общая обработка пагинации"""
+    if action == "prev":
+        return max(0, current_page - 1)
+    elif action == "next":
+        return min(total_pages - 1, current_page + 1)
+    elif action == "back5":
+        return max(0, current_page - 5)
+    elif action == "forward5":
+        return min(total_pages - 1, current_page + 5)
+    elif action == "first":
+        return 0
+    elif action == "last":
+        return total_pages - 1
+        
+    await callback.answer("Неизвестное действие")
+    return current_page

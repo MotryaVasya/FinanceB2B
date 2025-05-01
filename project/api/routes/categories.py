@@ -14,9 +14,9 @@ from project.services import category_service
 router = APIRouter(prefix='/categories', tags=['Categories'])
 
 @router.post('/', response_model=CategoryOut)
-async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_db)):
+async def create_category(user_id: int, data: CategoryCreate, db: AsyncSession = Depends(get_db)):
     try:
-        return await category_service.create(db, data)
+        return await category_service.create(user_id, db, data)
     except HTTPException:
         raise
     except Exception as e:
@@ -44,11 +44,10 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)):
         }))
 
 
-# из-за пустово списка который возвраащется при пустой таблице может быть ошибка в response_model что она ожидает в возврате list[CategoryOut]
 @router.get('/', response_model=list[CategoryOut])
-async def get_categories(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def get_categories(user_id: int, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     try:
-        return await category_service.get_all(db, skip, limit)
+        return await category_service.get_all(user_id, db, skip, limit)
     except HTTPException:
         raise
     except Exception as e:

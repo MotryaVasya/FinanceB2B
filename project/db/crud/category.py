@@ -47,10 +47,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseError, SQLAlchemyError, InvalidRequestError, DBAPIError, DisconnectionError
 
-from project.db.models.category import Category # TODO потом поменять импорт из category
+from project.db.models.category import Category, User # TODO потом поменять импорт из category
 from project.db.schemas.category import CategoryCreate, CategoryUpdate
 
-async def create_category(session: AsyncSession, data: CategoryCreate) -> Category | None:
+async def create_category(user_id: int, session: AsyncSession, data: CategoryCreate) -> Category | None:
     """
     Создает новую категорию в базе данных.
 
@@ -62,7 +62,12 @@ async def create_category(session: AsyncSession, data: CategoryCreate) -> Catego
         Category: Созданный объект категории или None при ошибке.
     """
     try:
-        category = Category(**data.model_dump())
+        user_id_subquery = select(User.id).where(User.tg_id == user_id).scalar_subquery()
+        category = Category(
+            name_category=data.name_category,
+            type=data.type,
+            user_id=user_id_subquery
+        )
         session.add(category)
         await session.commit()
         await session.refresh(category)
@@ -109,7 +114,7 @@ async def get_category(session: AsyncSession, category_id: int, as_pydantic: boo
         }))
         return None
 
-async def get_all_categories(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
+async def get_all_categories(user_id: int, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
     """
     Получает список категорий с диапозоном.
 
@@ -134,7 +139,14 @@ async def get_all_categories(session: AsyncSession, skip: int = 0, limit: int = 
             - произошла ошибка при запросе
     """
     try:
-        result = await session.execute(select(Category).offset(skip).limit(limit))
+        user_id_subquery = select(User.id).where(User.tg_id == user_id).scalar_subquery()
+
+        result = await session.execute(select(Category)
+                                       .where((Category.user_id == user_id_subquery) | 
+                                              (Category.user_id == None))
+                                       .order_by(Category.user_id.desc())
+                                       .offset(skip)
+                                       .limit(limit))
         categories = result.scalars().all()
         return [category.to_pydantic() for category in categories] or []
     except (SQLAlchemyError) as e:
