@@ -1,3 +1,4 @@
+from aiogram import types
 from typing import Union
 from aiogram import Router, F
 import re
@@ -5,6 +6,8 @@ from aiogram.filters import or_f,StateFilter,and_f
 from aiogram.types import Message, CallbackQuery,ReplyKeyboardRemove
 from project.bot.conecting_methods.category import get_categories
 from project.bot.conecting_methods.methods import check_action
+from project.bot.handlers.statistic import get_month_name
+from project.bot.keyboards.calendar_keyboard import generate_calendar, get_calendar_keyboard
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
 from project.bot.states import *
@@ -12,7 +15,7 @@ from project.bot.keyboards.reply import *
 from project.bot.Save import save
 from datetime import datetime
 import calendar
-
+from project.bot.keyboards.inline_transactions import build_category_choice_keyboard, build_pagination_keyboard_for_categories
 from project.bot.conecting_methods.transactions import create_transaction, delete_transaction, get_transactions
 from project.bot.messages.mesage_transaction import PAGE_SIZE, get_paginated_transactions
 from project.bot.keyboards.inline_transactions import (back_menu_or_list_transactions,
@@ -34,29 +37,113 @@ class AddTransaction(StatesGroup):
 
 @router.message(F.text == 'Добaвить запись')
 async def add_transaction_start(message: Message, state: FSMContext):
-    # Получаем список категорий пользователя
     categories = await get_categories(message.from_user.id)
     
     if not categories:
         await message.answer("У вас нет категорий. Сначала создайте хотя бы одну категорию.")
         return
     
-    # Создаем клавиатуру с категориями
-    builder = InlineKeyboardBuilder()
-    for category in categories:
-        builder.button(
-            text=category['name_category'],
-            callback_data=f"addtx_category_{category['id']}"
-        )
-    builder.button(text="❌ Отмена", callback_data="addtx_cancel")
-    builder.adjust(2)
+    await state.update_data(all_categories=categories)
+    user_pages[message.from_user.id] = 0
     
-    await state.set_state(AddTransaction.waiting_for_category)
-    await message.answer(
-        "Выберите категорию для новой транзакции:",
-        reply_markup=builder.as_markup()
-    )
+    try:
+        message_text = await format_categories_page(categories, 0)
+        total_pages = max(1, (len(categories) + PAGE_SIZE - 1) // PAGE_SIZE)
+        keyboard = await build_pagination_keyboard_for_categories(0, total_pages, message.from_user.id)
+        
+        await state.set_state(AddTransaction.waiting_for_category)
+        await message.answer(
+            "Выберите категорию для новой транзакции:\n\n" + message_text,
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        await message.answer(f"Ошибка при получении категорий: {e}")
+async def format_categories_page(categories: list, page: int) -> str:
+    """Форматирует страницу с категориями для отображения"""
+    start_idx = page * PAGE_SIZE
+    page_categories = categories[start_idx:start_idx + PAGE_SIZE]
+    
+    formatted = []
+    for cat in page_categories:
+        try:
+            name = cat['name_category'].encode('utf-8').decode('utf-8')
+        except:
+            name = cat['name_category']
+        
+        cat_type = 'Доход' if cat['type'] == 1 else 'Расход'
+        formatted.append(
+            f"🔖 {name}\n"
+            f"📝 Тип: {cat_type}\n"
+            f"━━━━━━━━━━━━━━━━━"
+        )
+    
+    total_pages = max(1, (len(categories) + PAGE_SIZE - 1) // PAGE_SIZE)
+    header = "Список категорий:\n\n"
+    message = header + "\n\n".join(formatted)
+    message += f"\n\nСтраница {page + 1}/{total_pages}"
+    
+    return message
 
+@router.callback_query(F.data.startswith("tx_categories_"), AddTransaction.waiting_for_category)
+async def handle_pagination_for_categories(callback: CallbackQuery, state: FSMContext):
+    try:
+        data_parts = callback.data.split('_')
+        action = data_parts[2]
+        user_id = int(data_parts[3])
+        current_page = user_pages.get(user_id, 0)
+        
+        state_data = await state.get_data()
+        categories = state_data.get('all_categories', [])
+        total_pages = max(1, (len(categories) + PAGE_SIZE - 1) // PAGE_SIZE)
+        
+        if action == "choose":
+            start_idx = current_page * PAGE_SIZE
+            page_categories = categories[start_idx:start_idx + PAGE_SIZE]
+            keyboard = await build_category_choice_keyboard(page_categories, user_id)
+            await callback.message.edit_reply_markup(reply_markup=keyboard)
+            await callback.answer()
+            return
+            
+        elif action == "back":
+            message_text = await format_categories_page(categories, current_page)
+            keyboard = await build_pagination_keyboard_for_categories(current_page, total_pages, user_id)
+            await callback.message.edit_text(
+                text="Выберите категорию для новой транзакции:\n\n" + message_text,
+                reply_markup=keyboard
+            )
+            await callback.answer()
+            return
+            
+        # Обработка пагинации
+        new_page = current_page
+        if action == "prev":
+            new_page = max(0, current_page - 1)
+        elif action == "next":
+            new_page = min(total_pages - 1, current_page + 1)
+        elif action == "back5":
+            new_page = max(0, current_page - 5)  # На 5 страниц назад (но не меньше 0)
+        elif action == "forward5":
+            new_page = min(total_pages - 1, current_page + 5)  # На 5 страниц вперед (но не больше максимума)
+        elif action == "first":
+            new_page = 0
+        elif action == "last":
+            new_page = total_pages - 1
+            
+        if new_page != current_page:
+            user_pages[user_id] = new_page
+            message_text = await format_categories_page(categories, new_page)
+            keyboard = await build_pagination_keyboard_for_categories(new_page, total_pages, user_id)
+            await callback.message.edit_text(
+                text="Выберите категорию для новой транзакции:\n\n" + message_text,
+                reply_markup=keyboard
+            )
+            
+        await callback.answer()
+        
+    except Exception as e:
+        print(f"Error in handle_pagination_for_categories: {e}")
+        await callback.answer("Произошла ошибка при обработке")
+        
 @router.callback_query(F.data.startswith("addtx_category_"))
 async def add_transaction_category(callback: CallbackQuery, state: FSMContext):
     category_id = int(callback.data.split('_')[2])
@@ -142,33 +229,89 @@ async def set_date_today(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 @router.callback_query(F.data == "addtx_date_custom")
-async def ask_custom_date(callback: CallbackQuery, state: FSMContext):
+async def ask_custom_date(callback: types.CallbackQuery, state: FSMContext):
+    """Показывает календарь для выбора даты"""
+    keyboard = await get_calendar_keyboard()
     await callback.message.edit_text(
-        "Введите дату в формате ГГГГ-ММ-ДД (например: 2023-12-31):",
-        reply_markup=None
+        "🗓 Выберите дату из календаря:",
+        reply_markup=keyboard
     )
     await callback.answer()
-
-@router.message(AddTransaction.waiting_for_date)
-async def set_custom_date(message: Message, state: FSMContext):
-    try:
-        date_str = message.text.strip()
-        datetime.strptime(date_str, "%Y-%m-%d")  # Проверка формата
-        await state.update_data(date=date_str)
-        await show_confirmation(message, state)
-    except ValueError:
-        await message.answer("Некорректный формат даты. Введите в формате ГГГГ-ММ-ДД (например: 2023-12-31):")
+@router.callback_query(F.data.startswith("calendar_"))
+async def handle_calendar_actions(callback: types.CallbackQuery, state: FSMContext):
+    action = callback.data.split("_")[1]
+    
+    if action == "day":
+        # Обработка выбора дня
+        _, _, year, month, day = callback.data.split("_")
+        selected_date = f"{year}-{month}-{day}"
+        await state.update_data(date=selected_date)
+        await show_confirmation(callback, state)
+        
+    elif action == "prev":
+        # Переход к предыдущему месяцу
+        _, _, year, month = callback.data.split("_")
+        year, month = int(year), int(month)
+        if month == 1:
+            year -= 1
+            month = 12
+        else:
+            month -= 1
+        keyboard = generate_calendar(year, month)
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
+        
+    elif action == "next":
+        # Переход к следующему месяцу
+        _, _, year, month = callback.data.split("_")
+        year, month = int(year), int(month)
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+        keyboard = generate_calendar(year, month)
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
+        
+    elif action == "confirm":
+        # Подтверждение выбранной даты
+        data = await state.get_data()
+        if 'date' not in data:
+            await callback.answer("Сначала выберите дату", show_alert=True)
+            return
+        await show_confirmation(callback, state)
+        
+    elif action == "cancel":
+        # Отмена выбора даты
+        await state.set_state(AddTransaction.waiting_for_date)
+        builder = InlineKeyboardBuilder()
+        builder.button(text="Сегодня", callback_data="addtx_date_today")
+        builder.button(text="Ввести дату", callback_data="addtx_date_custom")
+        builder.adjust(2)
+        await callback.message.edit_text(
+            "Выберите дату транзакции:",
+            reply_markup=builder.as_markup()
+        )
+    
+    await callback.answer()
 
 async def show_confirmation(update: Union[Message, CallbackQuery], state: FSMContext):
     data = await state.get_data()
     
-    # Формируем сообщение с данными
+    # Форматируем дату в более читаемый вид
+    date_str = data.get('date', 'не указана')
+    if date_str != 'не указана':
+        try:
+            year, month, day = map(int, date_str.split('-'))
+            date_str = f"{day} {get_month_name(month, case='genitive')} {year} г."
+        except:
+            pass
+    
     message_text = (
         "Проверьте данные транзакции:\n\n"
         f"Категория: {data.get('category_name', 'не указана')}\n"
         f"Сумма: {data.get('amount', 0):.2f} ₽\n"
         f"Описание: {data.get('description', 'не указано')}\n"
-        f"Дата: {data.get('date', 'не указана')}"
+        f"Дата: {date_str}"
     )
     
     # Создаем клавиатуру для подтверждения/редактирования

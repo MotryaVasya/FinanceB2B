@@ -1,5 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from project.bot.messages.mesage_transaction import PAGE_SIZE
+
 async def build_pagination_keyboard_for_show(page: int, total_pages: int, user_id: int):
     builder = InlineKeyboardBuilder()
     
@@ -53,32 +55,47 @@ async def build_pagination_keyboard_for_update(page: int, total_pages: int, user
     builder.adjust(3, 2)
     return builder.as_markup()
 
-async def build_pagination_keyboard_for_update_categories(page: int, total_pages: int, user_id: int):
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+async def build_pagination_keyboard_for_categories(page: int, total_pages: int, user_id: int):
+    """Клавиатура пагинации для текстового списка категорий"""
     builder = InlineKeyboardBuilder()
     
-    # Основные кнопки навигации
-    if page > 0:
-        builder.button(text="<", callback_data=f"transactionUC_prev_{user_id}")  # На 1 назад
-    
-    builder.button(text="Выбрать страницу", callback_data=f"transactionUC_choose_{user_id}")
-    
-    if page < total_pages - 1:
-        builder.button(text=">", callback_data=f"transactionUC_next_{user_id}")  # На 1 вперед
-
-    # Кнопки для перехода на 5 страниц или в крайние положения
-    if page >= 1:  # Если не на первой странице
+    # Кнопки пагинации
+    if total_pages > 1:
+        if page > 0:
+            builder.button(text="⬅️ Назад", callback_data=f"tx_categories_prev_{user_id}")
+        if page < total_pages - 1:
+            builder.button(text="Вперед ➡️", callback_data=f"tx_categories_next_{user_id}")
         if page >= 5:
-            builder.button(text="<<", callback_data=f"transactionUC_back5_{user_id}")  # На 5 назад
-        else:
-            builder.button(text="<<", callback_data=f"transactionUC_first_{user_id}")  # В начало
-    
-    if page < total_pages - 1:  # Если не на последней странице
+            builder.button(text="⏪ Назад на 5", callback_data=f"tx_categories_back5_{user_id}")
         if page + 5 < total_pages:
-            builder.button(text=">>", callback_data=f"transactionUC_forward5_{user_id}")  # На 5 вперед
-        else:
-            builder.button(text=">>", callback_data=f"transactionUC_last_{user_id}")  # В конец
+            builder.button(text="Вперед на 5 ⏩", callback_data=f"tx_categories_forward5_{user_id}")
+        if page != 0:
+            builder.button(text="⏮ Первая", callback_data=f"tx_categories_first_{user_id}")
+        if page != total_pages - 1:
+            builder.button(text="Последняя ⏭", callback_data=f"tx_categories_last_{user_id}")
+    
+    builder.button(text="Выбрать категорию", callback_data=f"tx_categories_choose_{user_id}")
+    builder.button(text="❌ Отмена", callback_data="addtx_cancel")
+    
+    builder.adjust(2, 2, 2, 2)  # Оптимальное расположение кнопок
+    return builder.as_markup()
 
-    builder.adjust(3, 2)
+async def build_category_choice_keyboard(categories: list, user_id: int):
+    """Клавиатура с кнопками категорий для выбора"""
+    builder = InlineKeyboardBuilder()
+    
+    for category in categories:
+        builder.button(
+            text=category['name_category'],
+            callback_data=f"addtx_category_{category['id']}"
+        )
+    
+    builder.button(text="◀ Назад", callback_data=f"tx_categories_back_{user_id}")
+    builder.button(text="❌ Отмена", callback_data="addtx_cancel")
+    
+    builder.adjust(2)  # По 2 кнопки в ряд
     return builder.as_markup()
 
 async def build_pagination_keyboard_for_delete(page: int, total_pages: int, user_id: int):
