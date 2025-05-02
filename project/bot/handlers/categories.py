@@ -67,7 +67,13 @@ async def start_add_category(message: Message, state: FSMContext):
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text="❌ Отмена", callback_data="cancel_creation")
     await message.answer(
-        "Введите название новой категории:",
+        "Введите название новой категории:\n\n"
+        "❕ Требования к названию:\n"
+        "- Не длиннее 50 символов\n"
+        "- Начинается с буквы или цифры\n"
+        "- Может содержать буквы, цифры, пробелы, дефисы и подчеркивания\n"
+        "- Должна быть хотя бы одна буква\n"
+        "- Не может состоять только из цифр",
         reply_markup=keyboard.as_markup()
     )
     # Затем отправляем сообщение с инлайн-клавиатурой
@@ -79,7 +85,23 @@ async def start_add_category(message: Message, state: FSMContext):
 @router.message(CategoryForm.name)
 async def process_name(message: Message, state: FSMContext):
     """Обработка названия категории и запрос типа"""
-    await state.update_data(name=message.text)
+    name = message.text.strip()
+    
+    if not validate_name(name):
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(text="❌ Отмена", callback_data="cancel_creation")
+        await message.answer(
+            "❌ Некорректное название категории. Пожалуйста, введите название, соответствующее требованиям:\n\n"
+            "- Не длиннее 50 символов\n"
+            "- Начинается с буквы или цифры\n"
+            "- Может содержать буквы, цифры, пробелы, дефисы и подчеркивания\n"
+            "- Должна быть хотя бы одна буква\n"
+            "- Не может состоять только из цифр",
+            reply_markup=keyboard.as_markup()
+        )
+        return
+    
+    await state.update_data(name=name)
     await state.set_state(CategoryForm.type)
     
     keyboard = await income_expence_back_cancel()
@@ -147,7 +169,13 @@ async def back_to_name_step(callback: CallbackQuery, state: FSMContext):
     keyboard.button(text="❌ Отмена", callback_data="cancel_creation")
     
     await callback.message.edit_text(
-        f"Введите название категории (предыдущее: {data.get('name', '')}):",
+        f"Введите название категории (предыдущее: {data.get('name', '')}):\n\n"
+        "❕ Требования к названию:\n"
+        "- Не длиннее 50 символов\n"
+        "- Начинается с буквы или цифры\n"
+        "- Может содержать буквы, цифры, пробелы, дефисы и подчеркивания\n"
+        "- Должна быть хотя бы одна буква\n"
+        "- Не может состоять только из цифр",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
