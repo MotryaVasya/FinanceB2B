@@ -32,7 +32,7 @@ class AddTransaction(StatesGroup):
     waiting_for_date = State()
     waiting_for_confirmation = State()
 
-@router.message(F.text == 'add transaction')
+@router.message(F.text == 'Добaвить запись')
 async def add_transaction_start(message: Message, state: FSMContext):
     # Получаем список категорий пользователя
     categories = await get_categories(message.from_user.id)
@@ -91,13 +91,12 @@ async def add_transaction_amount(message: Message, state: FSMContext):
         await state.set_state(AddTransaction.waiting_for_description)
         
         builder = InlineKeyboardBuilder()
-        builder.button(text="Пропустить", callback_data="addtx_skip_description")
         builder.button(text="❌ Отмена", callback_data="addtx_cancel")
         builder.adjust(2)
         
         await message.answer(
             f"Сумма: {amount:.2f} ₽\n\n"
-            "Введите описание транзакции (или нажмите 'Пропустить'):",
+            "Введите описание транзакции:",
             reply_markup=builder.as_markup()
         )
     except ValueError:
