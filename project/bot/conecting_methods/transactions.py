@@ -2,7 +2,7 @@ import logging
 import httpx
 from project.core.request_conf import *
 
-async def create_transaction(data: dict):
+async def create_transaction(params:dict, data: dict):
     """
     Создает новую транзакцию на сервере.
 
@@ -22,7 +22,7 @@ async def create_transaction(data: dict):
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(f'{URL}{TRANSACTIONS}', json=data)
+            response = await client.post(f'{URL}{TRANSACTIONS}',params=params, json=data)
             response.raise_for_status()
             if response.status_code == 200:
                 result = response.json()
