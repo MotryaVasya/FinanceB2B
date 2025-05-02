@@ -10,7 +10,7 @@ from project.services import transaction_service
 router = APIRouter(prefix='/transactions', tags=['Transactions'])
 
 @router.post('/', response_model=TransactionOut)
-async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends(get_db)):
+async def create_transaction(user_id: int, data: TransactionCreate, db: AsyncSession = Depends(get_db)):
     """
     Создаёт новую транзакцию в базе данных.
 
@@ -22,7 +22,7 @@ async def create_transaction(data: TransactionCreate, db: AsyncSession = Depends
         TransactionOut: Возвращает созданную транзакцию.
     """
     try:
-        return await transaction_service.create(db, data)
+        return await transaction_service.create(user_id, db, data)
     except HTTPException:
         raise
     except Exception as e:
@@ -132,7 +132,7 @@ async def get_transactions(month: int, user_id: int, db: AsyncSession = Depends(
         }))
 
 @router.put('/{transaction_id}', response_model=TransactionOut)
-async def update_transaction(transaction_id: int, data: TransactionUpdate, db: AsyncSession = Depends(get_db)):
+async def update_transaction(user_id: int, transaction_id: int, data: TransactionUpdate, db: AsyncSession = Depends(get_db)):
     """
     Обновляет информацию о транзакции по её ID.
 
@@ -146,7 +146,7 @@ async def update_transaction(transaction_id: int, data: TransactionUpdate, db: A
         HTTPException: Если транзакция не найдена.
     """
     try:
-        transaction = await transaction_service.update(db, transaction_id, data)
+        transaction = await transaction_service.update(user_id, db, transaction_id, data)
         if transaction is None:
             raise HTTPException(404, "Transaction not found")
         return transaction

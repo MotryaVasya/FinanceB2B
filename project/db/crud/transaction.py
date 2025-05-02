@@ -80,7 +80,7 @@ async def parse_naive_datetime(date_input: str | datetime) -> datetime:
         date_input = date_input.replace(tzinfo=None)
     return date_input
 
-async def update_money_for_user_for_create(session: AsyncSession, data: TransactionCreate):
+async def update_money_for_user_for_create(user_id: int, session: AsyncSession, data: TransactionCreate):
     """
     Обновляет баланс пользователя при создании новой транзакции.
 
@@ -99,8 +99,8 @@ async def update_money_for_user_for_create(session: AsyncSession, data: Transact
     type = res_type.scalars().first()
     if type is None:
         raise HTTPException(status_code=400, detail="Не найдена категория с данным ID.")
-        
-    res_user = await session.execute(select(User).where(User.id == data.user_id))
+    
+    res_user = await session.execute(select(User).where(User.id == user_id))
     user = res_user.scalars().first()
     if user is None:
         raise HTTPException(status_code=400, detail="Не найден пользователь с данным ID.")
@@ -110,7 +110,7 @@ async def update_money_for_user_for_create(session: AsyncSession, data: Transact
     else:  
         user.cash += Decimal(str(data.full_sum))
 
-async def update_money_for_user_for_update(session: AsyncSession, data: TransactionUpdate, transaction: Transaction):
+async def update_money_for_user_for_update(user_id: int, session: AsyncSession, data: TransactionUpdate, transaction: Transaction):
     """
     Обновляет баланс пользователя при обновлении существующей транзакции.
 
@@ -139,7 +139,7 @@ async def update_money_for_user_for_update(session: AsyncSession, data: Transact
     if new_type is None:
         raise HTTPException(status_code=404, detail="Новая категория не найдена.")
         
-    res_user = await session.execute(select(User).where(User.id == transaction.user_id))
+    res_user = await session.execute(select(User).where(User.id == user_id))
     user = res_user.scalars().first()
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден.")
@@ -206,7 +206,7 @@ async def check_date(month):
         to_date = datetime(year, month + 1, 1) - timedelta(seconds=1)
     return from_date, to_date
 
-async def create_transaction(session: AsyncSession, data: TransactionCreate) -> Transaction | None:
+async def create_transaction(user_id: int, session: AsyncSession, data: TransactionCreate) -> Transaction | None:
     """
     Создает новую транзакцию в базе данных.
 
@@ -219,16 +219,17 @@ async def create_transaction(session: AsyncSession, data: TransactionCreate) -> 
     """
     try:
         parsed_date = await parse_naive_datetime(data.date)
+        user_id_subquery = select(User.id).where(User.tg_id == user_id).scalar_subquery()
 
         transaction = Transaction(
             description=data.description,
             full_sum=data.full_sum,
             date=parsed_date,
             category_id=data.category_id,
-            user_id=data.user_id
+            user_id=user_id_subquery
         )
 
-        await update_money_for_user_for_create(session, data)
+        await update_money_for_user_for_create(user_id_subquery,session, data)
 
         session.add(transaction)
         await session.commit()
@@ -333,7 +334,7 @@ async def get_all_transactions(user_id: int, session: AsyncSession, skip: int = 
         }))
         return []
         
-async def update_transaction(session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
+async def update_transaction(user_id: int, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
     """
     Обновляет транзакцию в базе данных по указанному ID.
 
@@ -361,11 +362,12 @@ async def update_transaction(session: AsyncSession, transaction_id: int, data: T
     if transaction_id <= 0:
         return None
     try:
+        user_id_subquery = select(User.id).where(User.tg_id == user_id).scalar_subquery()
         transaction = await get_transaction(session, transaction_id, as_pydantic=False)
         if not transaction:
             return None
         
-        await update_money_for_user_for_update(session, data, transaction)
+        await update_money_for_user_for_update(user_id_subquery, session, data, transaction)
 
 
         updates = data.model_dump(exclude_unset=True)

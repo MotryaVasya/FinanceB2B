@@ -1,7 +1,9 @@
+from typing import Union
 from aiogram import Router, F
 import re
 from aiogram.filters import or_f,StateFilter,and_f
 from aiogram.types import Message, CallbackQuery,ReplyKeyboardRemove
+from project.bot.conecting_methods.category import get_categories
 from project.bot.conecting_methods.methods import check_action
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
@@ -11,7 +13,7 @@ from project.bot.Save import save
 from datetime import datetime
 import calendar
 
-from project.bot.conecting_methods.transactions import delete_transaction, get_transactions
+from project.bot.conecting_methods.transactions import create_transaction, delete_transaction, get_transactions
 from project.bot.messages.mesage_transaction import PAGE_SIZE, get_paginated_transactions
 from project.bot.keyboards.inline_transactions import (back_menu_or_list_transactions,
                                                        build_pagination_keyboard_for_delete, build_pagination_keyboard_for_show, confirm_or_cancel_buttons)
@@ -22,89 +24,269 @@ abb=["1","2","3","4","5","6","7","8"]
 abo=["1","2"]
 avtobus=["","","",""]
 
-@router.message(or_f(F.text == "Добaвить запись"))
-async def add_transaction_handler(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    open("show_categories.txt", "w").write(str(await save.update(user_id, "ADD_TRANSACTION")))
-    try:
-        await state.set_state(TransactionStates.in_add)
-        await message.answer(
-            reply_markup= await add_back_button(ReplyKeyboardMarkup(keyboard=[])),
-            text=add_trans
+
+class AddTransaction(StatesGroup):
+    waiting_for_category = State()
+    waiting_for_amount = State()
+    waiting_for_description = State()
+    waiting_for_date = State()
+    waiting_for_confirmation = State()
+
+@router.message(F.text == 'add transaction')
+async def add_transaction_start(message: Message, state: FSMContext):
+    # Получаем список категорий пользователя
+    categories = await get_categories(message.from_user.id)
+    
+    if not categories:
+        await message.answer("У вас нет категорий. Сначала создайте хотя бы одну категорию.")
+        return
+    
+    # Создаем клавиатуру с категориями
+    builder = InlineKeyboardBuilder()
+    for category in categories:
+        builder.button(
+            text=category['name_category'],
+            callback_data=f"addtx_category_{category['id']}"
         )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+    builder.button(text="❌ Отмена", callback_data="addtx_cancel")
+    builder.adjust(2)
+    
+    await state.set_state(AddTransaction.waiting_for_category)
+    await message.answer(
+        "Выберите категорию для новой транзакции:",
+        reply_markup=builder.as_markup()
+    )
 
-@router.message(StateFilter(TransactionStates.in_add))
-async def add_after_transaction(message: Message, state: FSMContext):
-    try:
-        await message.answer(
-            "📝 Введите описание для вашей записи (или пропустите):",
-            reply_markup=await zapis_add()
+@router.callback_query(F.data.startswith("addtx_category_"))
+async def add_transaction_category(callback: CallbackQuery, state: FSMContext):
+    category_id = int(callback.data.split('_')[2])
+    await state.update_data(category_id=category_id)
+    await state.set_state(AddTransaction.waiting_for_amount)
+    
+    # Получаем данные о категории для отображения
+    categories = await get_categories(callback.from_user.id)
+    category = next((c for c in categories if c['id'] == category_id), None)
+    
+    if category:
+        await state.update_data(category_name=category['name_category'])
+        await callback.message.edit_text(
+            f"Категория: {category['name_category']}\n\n"
+            "Введите сумму транзакции (например: 1000 или 150.50):",
+            reply_markup=None
         )
-        await state.set_state(TransactionStates.waiting_for_transaction_description)
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+    else:
+        await callback.message.edit_text("Ошибка: категория не найдена")
+        await state.clear()
+    
+    await callback.answer()
 
-
-@router.message(F.text=="Пропустить описание")
-async def after_description(message: Message, state: FSMContext):
+@router.message(AddTransaction.waiting_for_amount)
+async def add_transaction_amount(message: Message, state: FSMContext):
     try:
-        await message.answer(
-            "🎉Укажите теперь сумму вашей записи:",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        await state.set_state(TransactionStates.waiting_for_transaction_amount)
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
-
-@router.message(TransactionStates.waiting_for_transaction_description)
-async def after_name(message: Message, state: FSMContext):
-    name = message.text.strip()
-    user_id = message.from_user.id
-    open("show_categories.txt", "w").write(str(await save.update(user_id, "SUM_DESCRIPTION")))
-    try:
-        await state.set_state(TransactionStates.waiting_for_transaction_amount)
-        await message.answer(
-            "🎉Укажите теперь сумму вашей записи:",
-            reply_markup=ReplyKeyboardRemove()
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
-
-
-@router.message(TransactionStates.waiting_for_transaction_amount)
-async def after_amount(message: Message, state: FSMContext):
-    name = message.text.strip()
-    user_id = message.from_user.id
-    open("show_categories.txt", "w").write(str(await save.update(user_id, "TRANSACTION_DESCRIPTION_DATA")))
-    try:
-        if name.isdigit():
-            await state.set_state(TransactionStates.wait_date)
-            await message.answer(
-                "Ура! 🎉 Ты успешно добавил сумму! Теперь укажи дату 📅😊",
-                reply_markup=await doty_keyboard(),
-                )
-        else:
-            await message.answer(
-                text_no,
-                )
-            return
-
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        amount = float(message.text.replace(',', '.'))
+        if amount <= 0:
+            raise ValueError("Сумма должна быть больше нуля")
+            
+        await state.update_data(amount=amount)
+        await state.set_state(AddTransaction.waiting_for_description)
         
-@router.message(TransactionStates.wait_date)
-async def after_date(message: Message, state: FSMContext):
-    try:
-        await state.set_state(TransactionStates.waiting_for_transaction_amount)
+        builder = InlineKeyboardBuilder()
+        builder.button(text="Пропустить", callback_data="addtx_skip_description")
+        builder.button(text="❌ Отмена", callback_data="addtx_cancel")
+        builder.adjust(2)
+        
         await message.answer(
-            "🎉 Отлично! Я сохранил вашу запись😊\n"
-            "🔙 Возвращаемся в главное меню!\n",
-            reply_markup=await start_keyboard()
+            f"Сумма: {amount:.2f} ₽\n\n"
+            "Введите описание транзакции (или нажмите 'Пропустить'):",
+            reply_markup=builder.as_markup()
+        )
+    except ValueError:
+        await message.answer("Некорректная сумма. Введите число (например: 1000 или 150.50):")
+
+@router.callback_query(F.data == "addtx_skip_description")
+async def skip_description(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(description=None)
+    await state.set_state(AddTransaction.waiting_for_date)
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Сегодня", callback_data="addtx_date_today")
+    builder.button(text="Ввести дату", callback_data="addtx_date_custom")
+    builder.adjust(2)
+    await callback.message.edit_text(
+        "Описание: не указано\n\n"
+        "Выберите дату транзакции:",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@router.message(AddTransaction.waiting_for_description)
+async def add_transaction_description(message: Message, state: FSMContext):
+    description = message.text.strip()
+    await state.update_data(description=description)
+    await state.set_state(AddTransaction.waiting_for_date)
+    
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Сегодня", callback_data="addtx_date_today")
+    builder.button(text="Ввести дату", callback_data="addtx_date_custom")
+    builder.adjust(2)
+    
+    await message.answer(
+        f"Описание: {description}\n\n"
+        "Выберите дату транзакции:",
+        reply_markup=builder.as_markup()
+    )
+
+@router.callback_query(F.data == "addtx_date_today")
+async def set_date_today(callback: CallbackQuery, state: FSMContext):
+    today = datetime.now().strftime("%Y-%m-%d")
+    await state.update_data(date=today)
+    await show_confirmation(callback, state)
+    await callback.answer()
+
+@router.callback_query(F.data == "addtx_date_custom")
+async def ask_custom_date(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(
+        "Введите дату в формате ГГГГ-ММ-ДД (например: 2023-12-31):",
+        reply_markup=None
+    )
+    await callback.answer()
+
+@router.message(AddTransaction.waiting_for_date)
+async def set_custom_date(message: Message, state: FSMContext):
+    try:
+        date_str = message.text.strip()
+        datetime.strptime(date_str, "%Y-%m-%d")  # Проверка формата
+        await state.update_data(date=date_str)
+        await show_confirmation(message, state)
+    except ValueError:
+        await message.answer("Некорректный формат даты. Введите в формате ГГГГ-ММ-ДД (например: 2023-12-31):")
+
+async def show_confirmation(update: Union[Message, CallbackQuery], state: FSMContext):
+    data = await state.get_data()
+    
+    # Формируем сообщение с данными
+    message_text = (
+        "Проверьте данные транзакции:\n\n"
+        f"Категория: {data.get('category_name', 'не указана')}\n"
+        f"Сумма: {data.get('amount', 0):.2f} ₽\n"
+        f"Описание: {data.get('description', 'не указано')}\n"
+        f"Дата: {data.get('date', 'не указана')}"
+    )
+    
+    # Создаем клавиатуру для подтверждения/редактирования
+    builder = InlineKeyboardBuilder()
+    builder.button(text="✅ Подтвердить", callback_data="addtx_confirm")
+    builder.button(text="✏️ Категория", callback_data="addtx_edit_category")
+    builder.button(text="✏️ Сумма", callback_data="addtx_edit_amount")
+    builder.button(text="✏️ Описание", callback_data="addtx_edit_description")
+    builder.button(text="✏️ Дата", callback_data="addtx_edit_date")
+    builder.button(text="❌ Отмена", callback_data="addtx_cancel")
+    builder.adjust(2, 2, 2)
+    
+    if isinstance(update, Message):
+        await update.answer(message_text, reply_markup=builder.as_markup())
+    else:
+        await update.message.edit_text(message_text, reply_markup=builder.as_markup())
+    
+    await state.set_state(AddTransaction.waiting_for_confirmation)
+
+@router.callback_query(F.data.startswith("addtx_edit_"))
+async def edit_transaction_field(callback: CallbackQuery, state: FSMContext):
+    field = callback.data.split('_')[2]
+    
+    if field == "category":
+        categories = await get_categories(callback.from_user.id)
+        builder = InlineKeyboardBuilder()
+        for category in categories:
+            builder.button(
+                text=category['name_category'],
+                callback_data=f"addtx_category_{category['id']}"
+            )
+        builder.button(text="◀ Назад", callback_data="addtx_back_to_confirm")
+        builder.adjust(2)
+        
+        await callback.message.edit_text(
+            "Выберите новую категорию:",
+            reply_markup=builder.as_markup()
+        )
+        await state.set_state(AddTransaction.waiting_for_category)
+    
+    elif field == "amount":
+        await callback.message.edit_text(
+            "Введите новую сумму транзакции (например: 1000 или 150.50):",
+            reply_markup=None
+        )
+        await state.set_state(AddTransaction.waiting_for_amount)
+    
+    elif field == "description":
+        builder = InlineKeyboardBuilder()
+        builder.button(text="Пропустить", callback_data="addtx_skip_description")
+        builder.button(text="◀ Назад", callback_data="addtx_back_to_confirm")
+        builder.adjust(2)
+        
+        await callback.message.edit_text(
+            "Введите новое описание транзакции (или нажмите 'Пропустить'):",
+            reply_markup=builder.as_markup()
+        )
+        await state.set_state(AddTransaction.waiting_for_description)
+    
+    elif field == "date":
+        builder = InlineKeyboardBuilder()
+        builder.button(text="Сегодня", callback_data="addtx_date_today")
+        builder.button(text="Ввести дату", callback_data="addtx_date_custom")
+        builder.button(text="◀ Назад", callback_data="addtx_back_to_confirm")
+        builder.adjust(2)
+        
+        await callback.message.edit_text(
+            "Выберите новую дату транзакции:",
+            reply_markup=builder.as_markup()
+        )
+        await state.set_state(AddTransaction.waiting_for_date)
+    
+    await callback.answer()
+
+@router.callback_query(F.data == "addtx_back_to_confirm")
+async def back_to_confirmation(callback: CallbackQuery, state: FSMContext):
+    await show_confirmation(callback, state)
+    await callback.answer()
+
+@router.callback_query(F.data == "addtx_confirm")
+async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    
+    try:
+        # Создаем транзакцию в базе данных
+        transaction_data = {
+            "description": data.get('description'),
+            "full_sum": data['amount'],
+            "date": data.get('date', datetime.now().strftime("%Y-%m-%d")),
+            "category_id": data['category_id'],
+            'user_id': callback.from_user.id
+        }
+        
+        # Здесь вызываем метод для создания транзакции в БД
+        await create_transaction(params={'user_id': callback.from_user.id}, data=transaction_data)
+        
+        await callback.message.edit_text(
+            "✅ Транзакция успешно добавлена!",
+            reply_markup=None
         )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        await callback.message.edit_text(
+            f"⚠️ Ошибка при добавлении транзакции: {e}",
+            reply_markup=None
+        )
+    finally:
+        await state.clear()
+    await callback.answer()
+
+@router.callback_query(F.data == "addtx_cancel")
+async def cancel_transaction(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(
+        "❌ Добавление транзакции отменено",
+        reply_markup=None
+    )
+    await callback.answer()
 
 
 

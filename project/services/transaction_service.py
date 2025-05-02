@@ -17,7 +17,7 @@ from project.db.crud import transaction as crud
 from project.db.schemas.transaction import TransactionCreate, TransactionStatistics, TransactionUpdate
 from project.db.models.category import Transaction # TODO потом поменять импорт из category
 
-async def create(session: AsyncSession, data: TransactionCreate)-> Transaction | None:
+async def create(user_id: int, session: AsyncSession, data: TransactionCreate)-> Transaction | None:
     """Создает новую транзакцию.
 
     Args:
@@ -27,7 +27,7 @@ async def create(session: AsyncSession, data: TransactionCreate)-> Transaction |
     Returns:
         Созданный объект транзакции или None при ошибке
     """
-    return await crud.create_transaction(session, data)
+    return await crud.create_transaction(user_id, session, data)
 
 async def get(session: AsyncSession, transaction_id: int) -> Transaction | None:
     """Получает транзакцию по идентификатору.
@@ -54,7 +54,7 @@ async def get_all(user_id: int, session: AsyncSession, skip: int = 0, limit: int
     """
     return await crud.get_all_transactions(user_id, session, skip, limit)
 
-async def update(session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
+async def update(user_id: int, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
     """Обновляет данные транзакции.
     
     Args:
@@ -65,7 +65,7 @@ async def update(session: AsyncSession, transaction_id: int, data: TransactionUp
     Returns:
         Обновленный объект транзакции или None если транзакция не найдена
     """
-    return await crud.update_transaction(session, transaction_id, data)
+    return await crud.update_transaction(user_id, session, transaction_id, data)
 
 async def delete(session: AsyncSession, transaction_id: int) -> bool:
     """Удаляет транзакцию.
