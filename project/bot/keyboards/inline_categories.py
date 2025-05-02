@@ -26,6 +26,7 @@ async def build_pagination_keyboard_for_show(page: int, total_pages: int, user_i
     
     if page < total_pages - 1:
         builder.button(text=">", callback_data=f"categories_next_{user_id}")  # На 1 вперед
+
     
     if page >= 1:  # Если не на первой странице
         if page >= 5:
@@ -39,7 +40,8 @@ async def build_pagination_keyboard_for_show(page: int, total_pages: int, user_i
         else:
             builder.button(text=">>", callback_data=f"categories_last_{user_id}")  # В конец
 
-    builder.adjust(2, 2)
+    builder.button(text="❌ Выйти", callback_data=f"cancel")
+    builder.adjust(2, 2, 1)
     return builder.as_markup()
 
 async def choose_buttons_delete(user_id, page_categories):
@@ -98,6 +100,7 @@ async def build_pagination_keyboard_for_update(page: int, total_pages: int, user
         else:
             builder.button(text=">>", callback_data=f"categoryU_last_{user_id}")  # В конец
 
+    builder.button(text="❌ Выйти", callback_data=f"cancel")
     builder.adjust(3, 2)
     return builder.as_markup()
 
@@ -126,6 +129,7 @@ async def build_pagination_keyboard_for_delete(page: int, total_pages: int, user
         else:
             builder.button(text=">>", callback_data=f"categoryD_last_{user_id}")  # В конец
 
+    builder.button(text="❌ Выйти", callback_data=f"cancel")
     builder.adjust(3, 2)
     return builder.as_markup()
 
