@@ -1,3 +1,4 @@
+import logging
 from aiogram import types
 from typing import Union
 from aiogram import Router, F
@@ -294,17 +295,40 @@ async def handle_calendar_actions(callback: types.CallbackQuery, state: FSMConte
     
     await callback.answer()
 
+@router.callback_query(F.data.startswith("calendar_day_"))
+async def handle_calendar_day_selection(callback: CallbackQuery, state: FSMContext):
+    try:
+        # Формат данных: calendar_day_YYYY_MM_DD
+        _, _, year, month, day = callback.data.split('_')
+        selected_date = f"{year}-{month}-{day}"
+        
+        # Проверяем валидность даты
+        datetime.strptime(selected_date, "%Y-%m-%d")
+        
+        await state.update_data(date=selected_date)
+        await callback.answer(f"Выбрана дата: {day}.{month}.{year}")
+        
+        # Показываем подтверждение
+        await show_confirmation(callback, state)
+        
+    except ValueError as e:
+        await callback.answer("❌ Некорректная дата", show_alert=True)
+        logging.error(f"Invalid date selected: {callback.data} - {str(e)}")
+    except Exception as e:
+        await callback.answer("❌ Ошибка выбора даты", show_alert=True)
+        logging.error(f"Error handling calendar selection: {str(e)}")
+
 async def show_confirmation(update: Union[Message, CallbackQuery], state: FSMContext):
     data = await state.get_data()
     
-    # Форматируем дату в более читаемый вид
-    date_str = data.get('date', 'не указана')
-    if date_str != 'не указана':
+    # Форматируем дату
+    date_str = "не указана"
+    if 'date' in data:
         try:
-            year, month, day = map(int, date_str.split('-'))
-            date_str = f"{day} {get_month_name(month, case='genitive')} {year} г."
-        except:
-            pass
+            date_obj = datetime.strptime(data['date'], "%Y-%m-%d")
+            date_str = date_obj.strftime("%d.%m.%Y")
+        except ValueError:
+            date_str = data['date']  # Оставляем как есть, если не удалось распарсить
     
     message_text = (
         "Проверьте данные транзакции:\n\n"
