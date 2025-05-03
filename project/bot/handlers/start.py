@@ -149,7 +149,7 @@ async def go_back(message: Message, state: FSMContext):
         else:
             await message.answer("Вы вернулись назад.", reply_markup=await start_keyboard())
     else:
-        await message.answer("Некуда возвращаться.", reply_markup=await start_keyboard())
+        await message.answer("🔙 Возвращаемся в главное меню! Чем займёмся дальше? 😊", reply_markup=await start_keyboard())
 
 async def reset_sost(state:FSMContext):
     await state.clear()

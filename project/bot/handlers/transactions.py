@@ -53,7 +53,7 @@ async def add_transaction_start(message: Message, state: FSMContext):
         
         await state.set_state(AddTransaction.waiting_for_category)
         await message.answer(
-            "Выберите категорию для новой транзакции:\n\n" + message_text,
+            "💸 Давайте создадим новую запись! Пожалуйста, выберите категорию:\n\n" + message_text,
             reply_markup=keyboard
         )
     except Exception as e:
@@ -108,7 +108,7 @@ async def handle_pagination_for_categories(callback: CallbackQuery, state: FSMCo
             message_text = await format_categories_page(categories, current_page)
             keyboard = await build_pagination_keyboard_for_categories(current_page, total_pages, user_id)
             await callback.message.edit_text(
-                text="Выберите категорию для новой транзакции:\n\n" + message_text,
+                text="Выберите категорию для новой записи:\n\n" + message_text,
                 reply_markup=keyboard
             )
             await callback.answer()
@@ -134,7 +134,7 @@ async def handle_pagination_for_categories(callback: CallbackQuery, state: FSMCo
             message_text = await format_categories_page(categories, new_page)
             keyboard = await build_pagination_keyboard_for_categories(new_page, total_pages, user_id)
             await callback.message.edit_text(
-                text="Выберите категорию для новой транзакции:\n\n" + message_text,
+                text="Выберите категорию для новой записи:\n\n" + message_text,
                 reply_markup=keyboard
             )
             
@@ -158,7 +158,8 @@ async def add_transaction_category(callback: CallbackQuery, state: FSMContext):
         await state.update_data(category_name=category['name_category'])
         await callback.message.edit_text(
             f"Категория: {category['name_category']}\n\n"
-            "Введите сумму транзакции (например: 1000 или 150.50):",
+            "Пожалуйста, введите сумму записи 💸\n"
+            "Пример: 1000 или 150.50\n",
             reply_markup=None
         )
     else:
@@ -183,11 +184,12 @@ async def add_transaction_amount(message: Message, state: FSMContext):
         
         await message.answer(
             f"Сумма: {amount:.2f} ₽\n\n"
-            "Введите описание транзакции:",
+            "📝 Введите описание для вашей записи:",
             reply_markup=builder.as_markup()
         )
     except ValueError:
-        await message.answer("Некорректная сумма. Введите число (например: 1000 или 150.50):")
+        await message.answer("Некорректная сумма 😔\n"
+        "Пожалуйста, введите число — например: 1000 или 150.50 💰")
 
 @router.callback_query(F.data == "addtx_skip_description")
 async def skip_description(callback: CallbackQuery, state: FSMContext):
@@ -199,7 +201,7 @@ async def skip_description(callback: CallbackQuery, state: FSMContext):
     builder.adjust(2)
     await callback.message.edit_text(
         "Описание: не указано\n\n"
-        "Выберите дату транзакции:",
+        "Выберите дату записи:",
         reply_markup=builder.as_markup()
     )
     await callback.answer()
@@ -217,7 +219,7 @@ async def add_transaction_description(message: Message, state: FSMContext):
     
     await message.answer(
         f"Описание: {description}\n\n"
-        "Выберите дату транзакции:",
+        "Ура! Теперь укажи дату 📅😊",
         reply_markup=builder.as_markup()
     )
 
@@ -297,7 +299,7 @@ async def handle_calendar_actions(callback: types.CallbackQuery, state: FSMConte
         builder.button(text="Ввести дату", callback_data="addtx_date_custom")
         builder.adjust(2)
         await callback.message.edit_text(
-            "Выберите дату транзакции:",
+            "Выберите дату записи:",
             reply_markup=builder.as_markup()
         )
     
@@ -316,11 +318,14 @@ async def show_confirmation(update: Union[Message, CallbackQuery], state: FSMCon
             pass
     
     message_text = (
-        "Проверьте данные транзакции:\n\n"
+        "Проверьте данные записи 📋\n\n"
         f"Категория: {data.get('category_name', 'не указана')}\n"
         f"Сумма: {data.get('amount', 0):.2f} ₽\n"
         f"Описание: {data.get('description', 'не указано')}\n"
-        f"Дата: {date_str}"
+        f"Дата: {date_str}\n\n"
+        f"Всё верно? 😊\n"
+        f"Если да — подтвердите.\n"
+        f"Если нужно что-то изменить — выберите, что именно хотите поменять!"
     )
     
     # Создаем клавиатуру для подтверждения/редактирования
@@ -352,7 +357,7 @@ async def edit_transaction_field(callback: CallbackQuery, state: FSMContext):
                 text=category['name_category'],
                 callback_data=f"addtx_category_{category['id']}"
             )
-        builder.button(text="◀ Назад", callback_data="addtx_back_to_confirm")
+        builder.button(text="< Назад", callback_data="addtx_back_to_confirm")
         builder.adjust(2)
         
         await callback.message.edit_text(
@@ -363,7 +368,7 @@ async def edit_transaction_field(callback: CallbackQuery, state: FSMContext):
     
     elif field == "amount":
         await callback.message.edit_text(
-            "Введите новую сумму транзакции (например: 1000 или 150.50):",
+            "Введите новую сумму записи (например: 1000 или 150.50):",
             reply_markup=None
         )
         await state.set_state(AddTransaction.waiting_for_amount)
@@ -371,11 +376,11 @@ async def edit_transaction_field(callback: CallbackQuery, state: FSMContext):
     elif field == "description":
         builder = InlineKeyboardBuilder()
         builder.button(text="Пропустить", callback_data="addtx_skip_description")
-        builder.button(text="◀ Назад", callback_data="addtx_back_to_confirm")
+        builder.button(text="< Назад", callback_data="addtx_back_to_confirm")
         builder.adjust(2)
         
         await callback.message.edit_text(
-            "Введите новое описание транзакции (или нажмите 'Пропустить'):",
+            "Введите новое описание записи (или нажмите 'Пропустить'):",
             reply_markup=builder.as_markup()
         )
         await state.set_state(AddTransaction.waiting_for_description)
@@ -384,11 +389,11 @@ async def edit_transaction_field(callback: CallbackQuery, state: FSMContext):
         builder = InlineKeyboardBuilder()
         builder.button(text="Сегодня", callback_data="addtx_date_today")
         builder.button(text="Ввести дату", callback_data="addtx_date_custom")
-        builder.button(text="◀ Назад", callback_data="addtx_back_to_confirm")
+        builder.button(text="< Назад", callback_data="addtx_back_to_confirm")
         builder.adjust(2)
         
         await callback.message.edit_text(
-            "Выберите новую дату транзакции:",
+            "Выберите новую дату записи:",
             reply_markup=builder.as_markup()
         )
         await state.set_state(AddTransaction.waiting_for_date)
@@ -405,7 +410,7 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     
     try:
-        # Создаем транзакцию в базе данных
+        # Создаем записи в базе данных
         transaction_data = {
             "description": data.get('description'),
             "full_sum": data['amount'],
@@ -414,16 +419,17 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
             'user_id': callback.from_user.id
         }
         
-        # Здесь вызываем метод для создания транзакции в БД
+        # Здесь вызываем метод для создания записи в БД
         await create_transaction(params={'user_id': callback.from_user.id}, data=transaction_data)
         
         await callback.message.edit_text(
-            "✅ Транзакция успешно добавлена!",
+            "✅ Ваша запись успешно добавлена!\n"
+            "🔙 Возвращаемся в главное меню!\n",
             reply_markup=None
         )
     except Exception as e:
         await callback.message.edit_text(
-            f"⚠️ Ошибка при добавлении транзакции: {e}\n"+str(transaction_data),
+            f"⚠️ Ошибка при добавлении записи: {e}\n"+str(transaction_data),
             reply_markup=None
         )
     finally:
@@ -434,7 +440,7 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
 async def cancel_transaction(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text(
-        "❌ Добавление транзакции отменено",
+        "❌ Добавление записи отменено",
         reply_markup=None
     )
     await callback.answer()
@@ -462,7 +468,7 @@ async def update_transaction_handler(message: Message, state: FSMContext):
             "итп\n",
         )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 
 @router.message(TransactionStates.in_update_name)
 async def del_after_choos1(message: Message, state: FSMContext):
@@ -476,7 +482,7 @@ async def del_after_choos1(message: Message, state: FSMContext):
             reply_markup= await skip_update_from_trans()
         )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 
 
 @router.message(TransactionStates.in_update_cat)
@@ -488,7 +494,7 @@ async def del_after_choos2(message: Message, state: FSMContext):
             reply_markup= await skip_update_desk_from_trans()
         )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 
 
 @router.message(F.text=="Пропустить описание записи")
@@ -502,7 +508,7 @@ async def del_after_choos3(message: Message, state: FSMContext):
             reply_markup= await skip_update_amount_from_trans()
         )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 @router.message(TransactionStates.update_for_transaction_description)
 async def del_after_choos4(message: Message, state: FSMContext):
     try:
@@ -512,7 +518,7 @@ async def del_after_choos4(message: Message, state: FSMContext):
             reply_markup= await skip_update_amount_from_trans()
         )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 
 @router.message(F.text=="Пропустить изменение суммы")
 async def del_after_choos5(message: Message, state: FSMContext):
@@ -525,7 +531,7 @@ async def del_after_choos5(message: Message, state: FSMContext):
             reply_markup= await from_trans_skip_or_date()
         )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 
 @router.message(TransactionStates.update_for_transaction_amount)
 async def del_after_choos6(message: Message, state: FSMContext):
@@ -543,7 +549,7 @@ async def del_after_choos6(message: Message, state: FSMContext):
             )
             return
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 @router.message(or_f(TransactionStates.wait_date_update,F.text=="Пропустить изменение даты"))
 async def after_date_update(message: Message, state: FSMContext):
     name = message.text.strip()
@@ -563,7 +569,7 @@ async def after_date_update(message: Message, state: FSMContext):
                 reply_markup=await start_keyboard()
             )
     except Exception as e:
-        print(f"⚠️ Ошибка при добавлении транзакции: {e.__class__.__name__}: {e}")
+        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 
 @router.message(or_f(StateFilter(TransactionStates.update_no_sets),F.text == "Оставить как есть"))
 async def set_type(message: Message, state: FSMContext):
@@ -600,7 +606,7 @@ async def handle_delete_flow(user_id: int, message: Message, state: FSMContext):
         await message.answer('🙂 Вот список ваших записей! Какую из них хотите удалить?\n\n'+message_text,
                            reply_markup=keyboard)
     except Exception as e:
-        await message.answer(f"Ошибка при получении транзакций: {e}")
+        await message.answer(f"Ошибка при получении записи: {e}")
 
 @router.callback_query(F.data.startswith("transactionD_"))
 async def handle_pagination_for_delete(callback: CallbackQuery, state: FSMContext):
@@ -647,14 +653,14 @@ async def handle_transaction_selection_for_delete(callback: CallbackQuery, state
 
     # Получаем оригинальное сообщение
     data = await state.get_data()
-    original_message = data.get('original_message', "Список транзакций")
+    original_message = data.get('original_message', "Список записей")
 
     # Создание клавиатуры через билдер
     builder = await confirm_or_cancel_buttons()
 
     await callback.message.edit_text(
         text=f"{original_message}\n\n"
-             f"Выбрана транзакция : '{transaction_name}'\n"
+             f"Выбрана запись : '{transaction_name}'\n"
              "❗️Вы уверены, что хотите удалить эту запись?",
         reply_markup=builder.as_markup()
     )
@@ -675,7 +681,7 @@ async def confirm_delete_transaction(callback: CallbackQuery, state: FSMContext)
             )
             
     else:
-        await callback.message.edit_text("⚠️ Ошибка: ID транзакции не найден.")
+        await callback.message.edit_text("⚠️ Ошибка: ID записи не найден.")
 
     await callback.answer()
     await state.clear()
@@ -700,7 +706,7 @@ async def show_transactions(message: Message):
         keyboard = await build_pagination_keyboard_for_show(0, total_pages, user_id)
         await message.answer('📂 Вот список всех записей😊 :\n\n'+message_text, reply_markup=keyboard)
     except Exception as e:
-        await message.answer(f"Ошибка при получении транзакций: {e}")
+        await message.answer(f"Ошибка при получении записи: {e}")
 
 @router.callback_query(F.data.startswith("transactions_"))
 async def handle_pagination_for_show(callback: CallbackQuery):

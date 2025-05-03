@@ -67,13 +67,16 @@ async def start_add_category(message: Message, state: FSMContext):
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text="❌ Отмена", callback_data="cancel_creation")
     await message.answer(
-        "Введите название новой категории:\n\n"
-        "❕ Требования к названию:\n"
-        "- Не длиннее 50 символов\n"
-        "- Начинается с буквы или цифры\n"
-        "- Может содержать буквы, цифры, пробелы, дефисы и подчеркивания\n"
-        "- Должна быть хотя бы одна буква\n"
-        "- Не может состоять только из цифр",
+        "💡 Введите название новой категории:\n"
+        "\n"
+        "❕ Пожалуйста, учтите требования:\n"
+        "🔹 Не длиннее 50 символов\n"
+        "🔹 Начинается с буквы или цифры\n"
+        "🔹 Разрешены буквы, цифры, пробелы, дефисы и подчёркивания\n"  
+        "🔹 Обязательно должна быть хотя бы одна буква\n"  
+        "🔹 Не может состоять только из цифр\n"
+        "\n"
+        "✨ Придумайте понятное и короткое название — оно поможет вам быстрее ориентироваться в записях!\n",
         reply_markup=keyboard.as_markup()
     )
     # Затем отправляем сообщение с инлайн-клавиатурой
@@ -92,11 +95,11 @@ async def process_name(message: Message, state: FSMContext):
         keyboard.button(text="❌ Отмена", callback_data="cancel_creation")
         await message.answer(
             "❌ Некорректное название категории. Пожалуйста, введите название, соответствующее требованиям:\n\n"
-            "- Не длиннее 50 символов\n"
-            "- Начинается с буквы или цифры\n"
-            "- Может содержать буквы, цифры, пробелы, дефисы и подчеркивания\n"
-            "- Должна быть хотя бы одна буква\n"
-            "- Не может состоять только из цифр",
+            "🔹 Не длиннее 50 символов\n"
+            "🔹 Начинается с буквы или цифры\n"
+            "🔹 Разрешены буквы, цифры, пробелы, дефисы и подчёркивания\n"  
+            "🔹 Обязательно должна быть хотя бы одна буква\n"  
+            "🔹 Не может состоять только из цифр\n",
             reply_markup=keyboard.as_markup()
         )
         return
@@ -107,7 +110,7 @@ async def process_name(message: Message, state: FSMContext):
     keyboard = await income_expence_back_cancel()
     
     await message.answer(
-        "Выберите тип категории:",
+        "🎉 Готово! Название категории добавлено. Пожалуйста, выберите тип:\n",
         reply_markup=keyboard.as_markup()
     )
 
@@ -124,10 +127,10 @@ async def process_type(callback: CallbackQuery, state: FSMContext):
     keyboard = await confirm_back_cancel()
     
     await callback.message.edit_text(
-        f"Проверьте данные:\n\n"
+        f"Проверьте, пожалуйста, данные перед сохранением 💫\n\n"
         f"Название: {data['name']}\n"
         f"Тип: {category_type}\n\n"
-        f"Всё верно?",
+        f"Всё верно?😊\n",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -148,7 +151,9 @@ async def confirm_creation(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer(
             f"✅ Категория успешно создана!\n\n"
             f"Название: {data['name']}\n"
-            f"Тип: {'Доход' if data['type'] == 1 else 'Расход'}", reply_markup=await start_keyboard()
+            f"Тип: {'Доход' if data['type'] == 1 else 'Расход'}\n\n"
+            f"🔙 Возвращаемся в главное меню!\n",
+            reply_markup=await start_keyboard()
         )
     except Exception as e:
         await callback.message.answer(
@@ -169,13 +174,16 @@ async def back_to_name_step(callback: CallbackQuery, state: FSMContext):
     keyboard.button(text="❌ Отмена", callback_data="cancel_creation")
     
     await callback.message.edit_text(
-        f"Введите название категории (предыдущее: {data.get('name', '')}):\n\n"
-        "❕ Требования к названию:\n"
-        "- Не длиннее 50 символов\n"
-        "- Начинается с буквы или цифры\n"
-        "- Может содержать буквы, цифры, пробелы, дефисы и подчеркивания\n"
-        "- Должна быть хотя бы одна буква\n"
-        "- Не может состоять только из цифр",
+        "💡 Введите название новой категории:\n"
+        "\n"
+        "❕ Пожалуйста, учтите требования:\n"
+        "🔹 Не длиннее 50 символов\n"
+        "🔹 Начинается с буквы или цифры\n"
+        "🔹 Разрешены буквы, цифры, пробелы, дефисы и подчёркивания\n"  
+        "🔹 Обязательно должна быть хотя бы одна буква\n"  
+        "🔹 Не может состоять только из цифр\n"
+        "\n"
+        "✨ Придумайте понятное и короткое название — оно поможет вам быстрее ориентироваться в записях!\n",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -188,7 +196,7 @@ async def back_to_type_step(callback: CallbackQuery, state: FSMContext):
     keyboard = await income_expence_back_cancel()
     
     await callback.message.edit_text(
-        "Выберите тип категории:",
+        "😊 Пожалуйста, выберите тип:",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -263,7 +271,7 @@ async def format_categories_page(categories: list, page: int) -> str:
         )
     
     total_pages = max(1, (len(categories) + PAGE_SIZE - 1) // PAGE_SIZE)
-    header = "Список категорий:\n\n"
+    header = "Вот ваш список категорий 📂:\n\n"
     message = header + "\n\n".join(formatted)
     message += f"\n\nСтраница {page + 1}/{total_pages}"
     
@@ -401,7 +409,9 @@ async def select_category_for_update(callback: CallbackQuery, state: FSMContext)
         
         await callback.message.edit_text(
             text=f"Выбрана категория: {category_name}\n\n"
-                 "Введите новое название категории или нажмите 'Оставить как есть':",
+                 "Введите новое название категории ✏️\n"
+                 'Или нажмите "Оставить как есть", если менять ничего не нужно\n'
+                 ,
             reply_markup=keyboard.as_markup()
         )
         await callback.answer()
@@ -419,7 +429,8 @@ async def keep_current_name(callback: CallbackQuery, state: FSMContext):
     
     keyboard = await income_expence_back_cancel_keep()
     await callback.message.edit_text(
-        "Выберите новый тип категории или оставьте текущий:",
+        "Выберите новый тип категории 🔄\n"
+        'Или нажмите "Оставить текущий", если менять ничего не нужно\n',
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -432,7 +443,8 @@ async def process_new_name(message: Message, state: FSMContext):
     
     keyboard = await income_expence_back_cancel_keep()
     await message.answer(
-        "Выберите новый тип категории или оставьте текущий:",
+        "Выберите новый тип категории 🔄\n"
+        'Или нажмите "Оставить текущий", если менять ничего не нужно\n',
         reply_markup=keyboard.as_markup()
     )
 
@@ -448,11 +460,11 @@ async def process_new_type(callback: CallbackQuery, state: FSMContext):
     
     keyboard = await confirm_back_cancel_for_update()
     await callback.message.edit_text(
-        f"Проверьте новые данные:\n\n"
+        f"Проверьте новые данные 🔍:\n\n"
         f"Текущее название: {data['current_name']}\n"
         f"Новое название: {data['new_name']}\n"
         f"Новый тип: {category_type}\n\n"
-        f"Подтверждаете изменения?",
+        f"Подтверждаете изменения? 😊",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -470,11 +482,11 @@ async def keep_current_type(callback: CallbackQuery, state: FSMContext):
     
     keyboard = await confirm_back_cancel_for_update()
     await callback.message.edit_text(
-        f"Проверьте новые данные:\n\n"
+        f"Проверьте новые данные 🔍:\n\n"
         f"Текущее название: {data['current_name']}\n"
         f"Новое название: {data['new_name']}\n"
         f"Тип остался без изменений: {category_type}\n\n"
-        f"Подтверждаете изменения?",
+        f"Подтверждаете изменения? 😊",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -486,7 +498,7 @@ async def back_to_type_step_update(callback: CallbackQuery, state: FSMContext):
     
     keyboard = await income_expence_back_cancel()
     await callback.message.edit_text(
-        "Выберите тип категории:",
+        "😊 Пожалуйста, выберите тип:",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -502,7 +514,7 @@ async def back_to_name_step_update(callback: CallbackQuery, state: FSMContext):
     
     await callback.message.edit_text(
         f"Текущее название: {data.get('current_name', '')}\n"
-        "Введите новое название категории:",
+        "Введите новое название категории ✏️",
         reply_markup=keyboard.as_markup()
     )
     await callback.answer()
@@ -519,7 +531,8 @@ async def confirm_update_category(callback: CallbackQuery, state: FSMContext):
         
         await update_category(data['category_id'], update_data)
         await callback.message.answer(
-            text=f"✅ Категория успешно обновлена!",
+            text=f"✅ Категория успешно обновлена!\n"
+            "🔙 Возвращаемся в главное меню!\n",
             reply_markup=await start_keyboard()
         )
         await state.clear()
@@ -662,7 +675,8 @@ async def select_category_for_delete(callback: CallbackQuery, state: FSMContext)
         await callback.message.edit_text(
             text=f"Вы уверены, что хотите удалить категорию?\n\n"
                  f"🔖 {category_name}\n\n"
-                 f"Все связанные транзакции будут перемещены в категорию 'Без категории'?",
+                 f'Все связанные транзакции будут перемещены в категорию "Без категории"?\n'
+                 f"😊 Подтвердите действие, если всё верно!",
             reply_markup=keyboard.as_markup()
         )
         await callback.answer()
@@ -687,7 +701,8 @@ async def confirm_delete_category(callback: CallbackQuery, state: FSMContext):
         
         
         await callback.message.answer(
-            text=f"✅ Категория '{data['category_name']}' успешно удалена!\n\n",
+            text=f"✅ Категория '{data['category_name']}' успешно удалена!\n"
+            "🔙 Возвращаемся в главное меню!\n\n",
             reply_markup=await start_keyboard()
         )
         await callback.answer()
@@ -704,7 +719,8 @@ async def cancel_delete_category(callback: CallbackQuery, state: FSMContext):
     """Отмена удаления категории"""
     try:
         await callback.message.answer(
-            text="❌ Удаление отменено\n\n",
+            text="❌ Удаление отменено\n"
+            "🔙 Возвращаемся в главное меню!\n",
             reply_markup=await start_keyboard()
         )
         await callback.answer()
@@ -719,7 +735,8 @@ async def cancel_delete_category(callback: CallbackQuery, state: FSMContext):
 async def cancel(callback: CallbackQuery, state: FSMContext):
     try:
         await callback.message.answer(
-            text="❌ Вы вернулись назад\n\n",
+            text="❌ Вы вернулись в меню.\n"
+            "Можете выбрать нужный раздел и продолжить работу 😊\n\n",
             reply_markup=await start_keyboard()
         )
         await state.clear()

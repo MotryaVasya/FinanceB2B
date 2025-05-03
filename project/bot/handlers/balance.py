@@ -12,7 +12,7 @@ router=Router()
 @router.message(or_f(F.text=="Перейти в меню"),Context.biba)
 async def start_handler_for_help(message: Message,state: FSMContext):
     try:
-        state.clear()
+        await state.clear()
         await message.answer(
             pre_balance,
             reply_markup=await start_keyboard()

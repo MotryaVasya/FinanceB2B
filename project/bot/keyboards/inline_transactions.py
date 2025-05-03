@@ -64,17 +64,17 @@ async def build_pagination_keyboard_for_categories(page: int, total_pages: int, 
     # Кнопки пагинации
     if total_pages > 1:
         if page > 0:
-            builder.button(text="⬅️ Назад", callback_data=f"tx_categories_prev_{user_id}")
+            builder.button(text="<", callback_data=f"tx_categories_prev_{user_id}")
         if page < total_pages - 1:
-            builder.button(text="Вперед ➡️", callback_data=f"tx_categories_next_{user_id}")
+            builder.button(text=">", callback_data=f"tx_categories_next_{user_id}")
         if page >= 5:
-            builder.button(text="⏪ Назад на 5", callback_data=f"tx_categories_back5_{user_id}")
+            builder.button(text="<<", callback_data=f"tx_categories_back5_{user_id}")
         if page + 5 < total_pages:
-            builder.button(text="Вперед на 5 ⏩", callback_data=f"tx_categories_forward5_{user_id}")
+            builder.button(text=">>", callback_data=f"tx_categories_forward5_{user_id}")
         if page != 0:
-            builder.button(text="⏮ Первая", callback_data=f"tx_categories_first_{user_id}")
+            builder.button(text="<<", callback_data=f"tx_categories_first_{user_id}")
         if page != total_pages - 1:
-            builder.button(text="Последняя ⏭", callback_data=f"tx_categories_last_{user_id}")
+            builder.button(text=">>", callback_data=f"tx_categories_last_{user_id}")
     
     builder.button(text="Выбрать категорию", callback_data=f"tx_categories_choose_{user_id}")
     builder.button(text="❌ Отмена", callback_data="addtx_cancel")
@@ -92,7 +92,7 @@ async def build_category_choice_keyboard(categories: list, user_id: int):
             callback_data=f"addtx_category_{category['id']}"
         )
     
-    builder.button(text="◀ Назад", callback_data=f"tx_categories_back_{user_id}")
+    builder.button(text="< Назад", callback_data=f"tx_categories_back_{user_id}")
     builder.button(text="❌ Отмена", callback_data="addtx_cancel")
     
     builder.adjust(2)  # По 2 кнопки в ряд
