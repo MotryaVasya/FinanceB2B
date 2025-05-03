@@ -245,6 +245,15 @@ async def handle_calendar_actions(callback: types.CallbackQuery, state: FSMConte
         # Обработка выбора дня
         _, _, year, month, day = callback.data.split("_")
         selected_date = f"{year}-{month}-{day}"
+
+
+        if int(day) < 10:
+            selected_date = f"{year}-{month}-0{day}"
+        if int(month) < 10:
+            selected_date = f"{year}-0{month}-{day}"
+        if int(month) < 10 and int(day) < 10:
+            selected_date = f"{year}-0{month}-0{day}"
+
         await state.update_data(date=selected_date)
         await show_confirmation(callback, state)
         
@@ -414,7 +423,7 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
         )
     except Exception as e:
         await callback.message.edit_text(
-            f"⚠️ Ошибка при добавлении транзакции: {e}",
+            f"⚠️ Ошибка при добавлении транзакции: {e}\n"+str(transaction_data),
             reply_markup=None
         )
     finally:
