@@ -47,7 +47,7 @@ async def get_transaction(transaction_id: int):
     Raises:
         HTTPStatusError: Если транзакция не найдена или произошла ошибка запроса.
     """
- 
+
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(f'{URL}{TRANSACTIONS}{transaction_id}')
@@ -86,36 +86,35 @@ async def get_transactions(user_id: int):
                 return result
     except httpx.HTTPStatusError as e:
         logging.error(f"Произошла ошибка при получении транзакции: {str(e)}")
-        raise httpx.HTTPStatusError(message="Произошла ошибка при получении транзакции")    
+        raise httpx.HTTPStatusError(message="Произошла ошибка при получении транзакции")
 
-async def update_transaction(transaction_id: int, update_data: dict):
+async def update_transaction(transaction_id: int, update_data: dict, user_id: int): # Добавляем user_id
     """
     Обновляет данные транзакции по её ID.
-
-    Пример использования:
-        updated = await update_transaction(3, {"amount": 2000})
-
-    Args:
-        transaction_id (int): Идентификатор обновляемой транзакции.
-        update_data (dict): Словарь с изменениями.
-
-    Returns:
-        dict: Обновлённые данные транзакции.
-
-    Raises:
-        HTTPStatusError: Если обновление не удалось или произошла ошибка.
+    ...
     """
-
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.put(f'{URL}{TRANSACTIONS}{transaction_id}', json=update_data)
+            response = await client.put(
+                f'{URL}{TRANSACTIONS}{transaction_id}',
+                params={'user_id': user_id}, # Добавляем user_id как query parameter
+                json=update_data
+            )
             response.raise_for_status()
             if response.status_code == 200:
-                result = response.json()
-                return result
+                return response.json()
     except httpx.HTTPStatusError as e:
-        logging.error(f"Произошла ошибка при обновлении транзакции: {str(e)}")
-        raise httpx.HTTPStatusError(message="Произошла ошибка при обновлении транзакции")
+        logging.error(f"Ошибка HTTP при обновлении транзакции ID {transaction_id}: {e}")
+        if e.response is not None:
+            try:
+                error_detail = e.response.json()
+                logging.error(f"Тело ответа при ошибке {e.response.status_code}: {error_detail}") # Логируем детали ошибки
+            except Exception:
+                logging.error(f"Тело ответа (не JSON) при ошибке {e.response.status_code}: {e.response.text}")
+        raise e # Перевыбрасываем пойманное исключение
+    except Exception as e:
+         logging.error(f"Неожиданная ошибка при обновлении транзакции ID {transaction_id}: {e}")
+         raise e
 
 async def delete_transaction(transaction_id: int):
     """
@@ -144,37 +143,45 @@ async def delete_transaction(transaction_id: int):
         logging.error(f"Произошла ошибка при удалении транзакции: {str(e)}")
         raise httpx.HTTPStatusError(message="Произошла ошибка при удалении транзакции")
 
-async def get_statistics_from_month(month: int, user_id: int):
+async def get_transactions(user_id: int, page: int = 1, per_page: int = 10) -> list:
     """
-    Получает статистику за указанный месяц для пользователя.
-
-    Пример использования:
-        stats = await get_statistics_from_month(4, user_id=1)
+    Получает транзакции пользователя с пагинацией.
 
     Args:
-        month (int): Номер месяца (1–12), за который нужна статистика.
-        user_id (int): Идентификатор пользователя.
+        user_id (int): ID пользователя
+        page (int): Номер страницы
+        per_page (int): Количество записей на странице
 
     Returns:
-        dict: Сводка статистики за месяц (доходы, расходы, топ категории).
-
-    Raises:
-        HTTPStatusError: Если данные не удалось получить.
+        list: Список транзакций или пустой список при ошибке
     """
     try:
         async with httpx.AsyncClient() as client:
             params = {
-                'user_id': user_id
+                'user_id': user_id,
+                'page': page,
+                'per_page': per_page
             }
-            response = await client.get(f'{URL}{TRANSACTIONS}{FROM_MONTH}{month}', params=params)
-            response.raise_for_status()
-            if response.status_code == 200:
-                result = response.json() 
-                return result
-    except httpx.HTTPStatusError as e:
-        logging.error(f"Произошла ошибка при получении статистики за месяц: {str(e)}")
-        raise httpx.HTTPStatusError(message="Произошла ошибка при получении статистики за месяц")
+            response = await client.get(
+                f'{URL}{TRANSACTIONS}',
+                params=params,
+                timeout=10.0
+            )
 
+            if response.status_code == 200:
+                return response.json() or []
+            elif response.status_code == 404:
+                return []
+            else:
+                response.raise_for_status()
+                return []
+
+    except httpx.HTTPStatusError as e:
+        logging.error(f"Ошибка HTTP при получении транзакций: {str(e)}")
+        return []
+    except Exception as e:
+        logging.error(f"Неожиданная ошибка при получении транзакций: {str(e)}")
+        return []
 async def get_statistics_from_period(data: dict):
     """
     Получает статистику за произвольный период времени.
@@ -197,7 +204,7 @@ async def get_statistics_from_period(data: dict):
             response = await client.get(f'{URL}{TRANSACTIONS}{STATISTICS}', params=data)
             response.raise_for_status()
             if response.status_code == 200:
-                result = response.json() 
+                result = response.json()
                 return result
     except httpx.HTTPStatusError as e:
         logging.error(f"Произошла ошибка при получении статистики за период: {str(e)}")

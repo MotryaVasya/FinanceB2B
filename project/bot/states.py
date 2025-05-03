@@ -20,6 +20,12 @@ class TransactionStates(StatesGroup):
     update_for_transaction_description = State()
     update_for_transaction_amount=State()
     update_no_sets=State()
+    waiting_for_selection = State()
+    waiting_for_new_category = State()
+    waiting_for_new_amount = State()
+    waiting_for_new_description = State()
+    waiting_for_new_date = State()
+    waiting_for_confirmation = State()
 
 class CategoryStates(StatesGroup):
     waiting_for_category_name = State()
