@@ -35,7 +35,7 @@ class AddTransaction(StatesGroup):
     waiting_for_date = State()
     waiting_for_confirmation = State()
 
-@router.message(F.text == 'add transaction')
+@router.message(F.text == 'Добавить запись')
 async def add_transaction_start(message: Message, state: FSMContext):
     # Получаем список категорий пользователя
     categories = await get_categories(message.from_user.id)
