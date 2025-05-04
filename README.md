@@ -67,6 +67,7 @@
 ## ⚙️ Инструкции по деплою
 
 1. Клонируйте репозиторий:
+   
         ```bash
         git clone https://github.com/MotryaVasya/FinanceB2B.git
         cd FinanceB2B
@@ -101,3 +102,5 @@
 
         ```bash
       docker compose up --build
+
+
