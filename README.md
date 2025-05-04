@@ -61,6 +61,7 @@
 | Главное меню бота            |
 |------------------------------|
 | ![Главное меню](https://github.com/MotryaVasya/FinanceB2B/blob/main/1.jpg) 
+  ![Главное меню](https://github.com/MotryaVasya/FinanceB2B/blob/main/2.jpg)|
 
 ---
 
