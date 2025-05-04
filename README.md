@@ -67,20 +67,20 @@
 ## ⚙️ Инструкции по деплою
 
 1. Клонируйте репозиторий:
-    ```bash
-            git clone https://github.com/MotryaVasya/FinanceB2B.git
-            cd FinanceB2B
+        ```bash
+        git clone https://github.com/MotryaVasya/FinanceB2B.git
+        cd FinanceB2B
    
 2.Создайте виртуальное окружение и активируйте его:
 
-         ```bash
-         python -m venv venv
-         venv\Scripts\activate
+        ```bash
+        python -m venv venv
+        venv\Scripts\activate
 
 3. Установите зависимости:
    
-         ```bash
-         pip install -r requirements.txt
+       ```bash
+       pip install -r requirements.txt
 
 4.Настройте переменные окружения:
    
