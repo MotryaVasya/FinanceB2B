@@ -73,32 +73,33 @@
    
 2.Создайте виртуальное окружение и активируйте его:
 
-   Для **Windows**:
+      ```bash
+      python -m venv venv
+      venv\Scripts\activate
 
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate
-
-3. *Установите зависимости:*
-   pip install -r requirements.txt
+3. Установите зависимости:
+   
+         ```bash
+         pip install -r requirements.txt
 
 4.Настройте переменные окружения:
-
-Создайте файл .env в корне проекта и добавьте следующие строки:
-
-BOT_TOKEN=токен_бота_из_Telegram
-POSTGRES_USER=идентификатор_администратора
-POSTGRES_PASSWORD=пароль_бд
-POSTGRES_DB=название_бд
-POSTGRES_HOST=локальный_хост
-POSTGRES_PORT=порт_бд
-DEBUG=True
+   
+      ```bash
+      Создайте файл .env в корне проекта и добавьте следующие строки:
+      
+      BOT_TOKEN=токен_бота_из_Telegram
+      POSTGRES_USER=идентификатор_администратора
+      POSTGRES_PASSWORD=пароль_бд
+      POSTGRES_DB=название_бд
+      POSTGRES_HOST=локальный_хост
+      POSTGRES_PORT=порт_бд
+      DEBUG=True
 
 5.Инициализируйте базу данных:Убедитесь, что у вас настроен PostgreSQL, и выполните миграции (если применимо).
 
 6.Запустите проект через Docker:
 
-bash
+  ```bash
 Копировать
 Редактировать
 docker compose up --build
