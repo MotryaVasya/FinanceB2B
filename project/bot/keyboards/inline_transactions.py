@@ -23,6 +23,7 @@ async def build_pagination_keyboard_for_show(page: int, total_pages: int, user_i
             builder.button(text=">>", callback_data=f"transactions_forward5_{user_id}")  # На 5 вперед
         else:
             builder.button(text=">>", callback_data=f"transactions_last_{user_id}")  # В конец
+    builder.button(text="❌ Отмена", callback_data="show_cancel")
 
     builder.adjust(2, 2)
     return builder.as_markup()

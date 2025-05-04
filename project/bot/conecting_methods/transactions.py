@@ -88,7 +88,7 @@ async def get_transactions(user_id: int):
         logging.error(f"Произошла ошибка при получении транзакции: {str(e)}")
         raise httpx.HTTPStatusError(message="Произошла ошибка при получении транзакции")    
 
-async def update_transaction(transaction_id: int, update_data: dict):
+async def update_transaction(user_id:int,transaction_id: int, update_data: dict):
     """
     Обновляет данные транзакции по её ID.
 
@@ -108,7 +108,7 @@ async def update_transaction(transaction_id: int, update_data: dict):
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.put(f'{URL}{TRANSACTIONS}{transaction_id}', json=update_data)
+            response = await client.put(f'{URL}{TRANSACTIONS}{transaction_id}', params={'user_id': user_id},json=update_data)
             response.raise_for_status()
             if response.status_code == 200:
                 result = response.json()
