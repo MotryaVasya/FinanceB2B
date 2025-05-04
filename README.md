@@ -88,15 +88,15 @@
 4. Настройте переменные окружения:
    
       ```bash
-      Создайте файл .env в корне проекта и добавьте следующие строки:
-      
-      BOT_TOKEN=токен_бота_из_Telegram
-      POSTGRES_USER=идентификатор_администратора
-      POSTGRES_PASSWORD=пароль_бд
-      POSTGRES_DB=название_бд
-      POSTGRES_HOST=локальный_хост
-      POSTGRES_PORT=порт_бд
-      DEBUG=True
+         Создайте файл .env в корне проекта и добавьте следующие строки:
+         
+         BOT_TOKEN=токен_бота_из_Telegram
+         POSTGRES_USER=идентификатор_администратора
+         POSTGRES_PASSWORD=пароль_бд
+         POSTGRES_DB=название_бд
+         POSTGRES_HOST=локальный_хост
+         POSTGRES_PORT=порт_бд
+         DEBUG=True
 
 5. Инициализируйте базу данных:Убедитесь, что у вас настроен PostgreSQL, и выполните миграции (если применимо).
 
@@ -108,5 +108,3 @@
 
    ```bash
       docker compose up --build
-
-
