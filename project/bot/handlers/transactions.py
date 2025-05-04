@@ -56,6 +56,10 @@ async def add_transaction_start(message: Message, state: FSMContext):
             "💸 Давайте создадим новую запись! Пожалуйста, выберите категорию:\n\n" + message_text,
             reply_markup=keyboard
         )
+        await message.answer(
+            "⬆️⬆️",
+            reply_markup=ReplyKeyboardRemove()
+        )
     except Exception as e:
         await message.answer(f"Ошибка при получении категорий: {e}")
 async def format_categories_page(categories: list, page: int) -> str:
@@ -592,6 +596,10 @@ async def set_type(message: Message, state: FSMContext):
 @router.message(F.text == 'Удалить запись')
 async def delete_transaction_message(message: Message, state: FSMContext):
     await handle_delete_flow(message.from_user.id, message, state)
+    await message.answer(
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
+    )
 
 @router.callback_query(F.data == 'back_to_list_transactions')
 async def back_to_list_callback(callback: CallbackQuery, state: FSMContext):
