@@ -382,9 +382,11 @@ async def select_year(callback: types.CallbackQuery):
                     f"📊 Статистика за период {from_dt_str} – {to_dt_str}:\n\n"
                     f"📈 Доходы: {income} ₽\n"
                     f"📉 Расходы: {expense} ₽\n\n"
-                    f"🔥 Топ-3 категорий расходов:\n"
+                    f"🔥 Топ-3 категорий по использованию:\n"
                 )
                 if top_categories:
+                    # Сортируем категории по убыванию суммы расходов
+                    top_categories.sort(key=lambda item: item.get("full_sum", 0), reverse=True)
                     for idx, item in enumerate(top_categories):
                         category_name = item.get("category_name", "Не указана")  # Use category_name
                         full_sum = item.get("full_sum", 0)  # Use full_sum
@@ -504,8 +506,10 @@ async def show_statistic_for_month(callback: types.CallbackQuery):
         top_categories = stats.get("top_categories", [])
 
         text = f"📊 Статистика за {month_name}:\n\n"  # Именительный падеж
-        text += f"📈 Доходы: {income} ₽\n" f"📉 Расходы: {expense} ₽\n\n" f"🔥 Топ-3 категорий расходов:\n"
+        text += f"📈 Доходы: {income} ₽\n" f"📉 Расходы: {expense} ₽\n\n" f"🔥 Топ-3 категорий по использованию:\n"
         if top_categories:
+            # Сортируем категории по убыванию суммы расходов
+            top_categories.sort(key=lambda item: item.get("full_sum", 0), reverse=True)
             for idx, item in enumerate(top_categories):
                 category_name = item.get("category_name", "Не указана")  # Use category_name
                 full_sum = item.get("full_sum", 0)  # Use full_sum
