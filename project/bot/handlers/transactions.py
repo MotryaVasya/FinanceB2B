@@ -1,5 +1,5 @@
 from aiogram import types
-from typing import Union
+from typing import Any, Dict, Optional, Union
 from aiogram import Router, F
 import re
 from aiogram.filters import or_f,StateFilter,and_f
@@ -16,7 +16,7 @@ from project.bot.Save import save
 from datetime import datetime
 import calendar
 from project.bot.keyboards.inline_transactions import build_category_choice_keyboard, build_pagination_keyboard_for_categories
-from project.bot.conecting_methods.transactions import create_transaction, delete_transaction, get_transactions
+from project.bot.conecting_methods.transactions import create_transaction, delete_transaction, get_transactions,update_transaction
 from project.bot.messages.mesage_transaction import PAGE_SIZE, get_paginated_transactions
 from project.bot.keyboards.inline_transactions import (back_menu_or_list_transactions,
                                                        build_pagination_keyboard_for_delete, build_pagination_keyboard_for_show, confirm_or_cancel_buttons)
@@ -56,6 +56,11 @@ async def add_transaction_start(message: Message, state: FSMContext):
             "💸 Давайте создадим новую запись! Пожалуйста, выберите категорию:\n\n" + message_text,
             reply_markup=keyboard
         )
+        await message.answer(
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
+    )
+        
     except Exception as e:
         await message.answer(f"Ошибка при получении категорий: {e}")
 async def format_categories_page(categories: list, page: int) -> str:
@@ -454,135 +459,478 @@ async def cancel_transaction(callback: CallbackQuery, state: FSMContext):
 
 
 
-@router.message(or_f(F.text == "Изменить запись",F.text=="Пропустить изменение категории"))
-async def update_transaction_handler(message: Message, state: FSMContext):
+@router.message(F.text == 'Изменить запись')
+async def start_update_transaction(message: Message, state: FSMContext):
+    """Начало процесса обновления"""
+    await state.set_state(UpdateTransactionForm.select_transaction)
     user_id = message.from_user.id
-    try:
-        await state.set_state(TransactionStates.in_update_name)
-        open("add_handler.txt", "w").write(str(await save.update(user_id, "ADD_TRANSACTION")))
-        open("main44.txt", "w").write(str(await save.convert_to_json()))
-        await message.answer(
-            "🎉 Вот все ваши записи! Какую вы хотите изменить?\n"
-            "1. название записи\n"
-            "2. название записи\n"
-            "итп\n",
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
+    user_pages[user_id] = 0
 
-@router.message(TransactionStates.in_update_name)
-async def del_after_choos1(message: Message, state: FSMContext):
     try:
-        await state.set_state(TransactionStates.in_update_cat)
-        await message.answer(
-            "✨ Выберите новую категорию, пожалуйста!\n\
-            1. название\n\
-            2. название\n\
-            итп.\n",
-            reply_markup= await skip_update_from_trans()
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
-
-
-@router.message(TransactionStates.in_update_cat)
-async def del_after_choos2(message: Message, state: FSMContext):
-    try:
-        await state.set_state(TransactionStates.update_for_transaction_description)
-        await message.answer(
-            "📝 Введите описание для вашей записи (или пропустите):\n",
-            reply_markup= await skip_update_desk_from_trans()
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
-
-
-@router.message(F.text=="Пропустить описание записи")
-async def del_after_choos3(message: Message, state: FSMContext):
-    try:
-        name = message.text.strip()
-        avtobus[0]=name
-        await state.set_state(TransactionStates.update_for_transaction_amount)
-        await message.answer(
-            "🎉Измените сумму вашей записи:\n",
-            reply_markup= await skip_update_amount_from_trans()
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
-@router.message(TransactionStates.update_for_transaction_description)
-async def del_after_choos4(message: Message, state: FSMContext):
-    try:
-        await state.set_state(TransactionStates.update_for_transaction_amount)
-        await message.answer(
-            "🎉Измените сумму вашей записи:\n",
-            reply_markup= await skip_update_amount_from_trans()
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
-
-@router.message(F.text=="Пропустить изменение суммы")
-async def del_after_choos5(message: Message, state: FSMContext):
-    try:
-        name = message.text.strip()
-        avtobus[1]=name
-        await state.set_state(TransactionStates.wait_date_update)
-        await message.answer(
-            "Ура!Теперь измени дату 📅😊\n",
-            reply_markup= await from_trans_skip_or_date()
-        )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
-
-@router.message(TransactionStates.update_for_transaction_amount)
-async def del_after_choos6(message: Message, state: FSMContext):
-    name = message.text.strip()
-    try:
-        await state.set_state(TransactionStates.wait_date_update)
-        if(name.isdigit()):
-            await message.answer(
-                "Ура! 🎉 Ты успешно добавил сумму! Теперь измени дату 📅😊\n",
-                reply_markup= await from_trans_skip_or_date()
-            )
-        else:
-            await message.answer(
-                text_no
-            )
+        transactions = await get_transactions(user_id)
+        if not transactions:
+            await message.answer("📭 У вас нет транзакций для редактирования")
             return
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
-@router.message(or_f(TransactionStates.wait_date_update,F.text=="Пропустить изменение даты"))
-async def after_date_update(message: Message, state: FSMContext):
-    name = message.text.strip()
-    avtobus[2]=name
-    try:
-        if(avtobus[0]=="Пропустить описание записи" and avtobus[1]=="Пропустить изменение суммы" and avtobus[2]=="Пропустить изменение даты"):
-            await state.set_state(TransactionStates.update_no_sets)
-            await message.answer(
-                "😕 Ничего не изменилось.\n Хотите вернуться и попробовать снова или оставить всё как есть?\n",
-                reply_markup= await aboba_keyboard()
-            )
-        else:
-            await state.clear()
-            await message.answer(
-                "🎉 Отлично! Я сохранил вашу запись😊\n"
-                "🔙 Возвращаемся в главное меню!\n",
-                reply_markup=await start_keyboard()
-            )
-    except Exception as e:
-        print(f"⚠️ Ошибка при добавлении записи: {e.__class__.__name__}: {e}")
 
-@router.message(or_f(StateFilter(TransactionStates.update_no_sets),F.text == "Оставить как есть"))
-async def set_type(message: Message, state: FSMContext):
-    try:
-        await state.clear()
+        await show_transactions_page(message, user_id, 0, transactions)
         await message.answer(
-            "👌 Всё оставлено как есть! Если что-то нужно будет изменить, я всегда готов помочь 😊\n"
-            "🔙 Возвращаемся в главное меню!\n",
-            reply_markup=await start_keyboard()
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    except Exception as e:
+        await message.answer(f"⚠️ Ошибка: {str(e)}")
+
+async def show_edit_menu(
+    source: Union[Message, CallbackQuery], 
+    transaction: Dict[str, Any], 
+    user_id: int
+):
+    """Отображение меню редактирования"""
+    builder = InlineKeyboardBuilder()
+    
+    builder.button(text="✏️ Сумму", callback_data="edit_transaction_amount")
+    builder.button(text="✏️ Описание", callback_data="edit_transaction_description")
+    builder.button(text="✏️ Дату", callback_data="edit_transaction_date")
+    builder.button(text="✅ Подтвердить", callback_data="confirm_transaction_update")
+    builder.button(text="❌ Отменить", callback_data="cancel_transaction_update")
+    
+    builder.adjust(3, 2)
+    
+    text = await format_transaction_details(transaction)
+    
+    if isinstance(source, Message):
+        await source.answer(text, reply_markup=builder.as_markup())
+    else:
+        await source.message.edit_text(text, reply_markup=builder.as_markup())
+
+async def show_transactions_page(
+    source: Union[Message, CallbackQuery],
+    user_id: int,
+    page: int,
+    transactions: list
+):
+    """Отображение страницы с транзакциями"""
+    total_pages = max(1, (len(transactions) + PAGE_SIZE - 1) // PAGE_SIZE)
+    start_idx = page * PAGE_SIZE
+    page_transactions = transactions[start_idx:start_idx + PAGE_SIZE]
+    
+    builder = InlineKeyboardBuilder()
+    
+    # Кнопки транзакций
+    for tx in page_transactions:
+        builder.button(
+            text=f"{tx.get('category_name', '?')} | {float(tx.get('full_sum', 0)):.2f} ₽",
+            callback_data=f"select_tx_{tx['id']}"
+        )
+    
+    # Кнопки пагинации
+    if page > 0:
+        builder.button(text="⬅️ Назад", callback_data=f"tx_prev_{user_id}")
+    if page < total_pages - 1:
+        builder.button(text="Вперед ➡️", callback_data=f"tx_next_{user_id}")
+    
+    builder.button(text="❌ Отмена", callback_data="cancel_transaction_update")
+    builder.adjust(1, *[1 for _ in page_transactions], 2, 1)
+    
+    text = f"📝 Выберите транзакцию (стр. {page + 1}/{total_pages}):"
+    
+    if isinstance(source, Message):
+        await source.answer(text, reply_markup=builder.as_markup())
+    else:
+        await source.message.edit_text(text, reply_markup=builder.as_markup())
+
+@router.callback_query(F.data.startswith("tx_"))
+async def handle_transaction_pagination(callback: CallbackQuery, state: FSMContext):
+    """Обработка пагинации транзакций"""
+    try:
+        action = callback.data.split('_')[1]
+        user_id = int(callback.data.split('_')[2])
+        current_page = user_pages.get(user_id, 0)
+
+        transactions = await get_transactions(user_id)
+        total_pages = max(1, (len(transactions) + PAGE_SIZE - 1) // PAGE_SIZE)
+
+        new_page = current_page
+        if action == "prev":
+            new_page = max(0, current_page - 1)
+        elif action == "next":
+            new_page = min(total_pages - 1, current_page + 1)
+
+        if new_page != current_page:
+            user_pages[user_id] = new_page
+            await show_transactions_page(callback, user_id, new_page, transactions)
+
+        await callback.answer()
+    except Exception as e:
+        print(f"Transaction pagination error: {e}")
+        await callback.answer("⚠️ Ошибка пагинации")
+
+@router.callback_query(F.data.startswith("select_tx_"))
+async def select_transaction_handler(callback: CallbackQuery, state: FSMContext):
+    """Обработка выбора транзакции"""
+    try:
+        tx_id = int(callback.data.split('_')[2])
+        user_id = callback.from_user.id
+
+        transactions = await get_transactions(user_id)
+        selected = next((tx for tx in transactions if tx['id'] == tx_id), None)
+
+        if not selected:
+            await callback.answer("⚠️ Транзакция не найдена")
+            return
+
+        await state.update_data(
+            transaction_id=tx_id,
+            current_transaction=selected
+        )
+
+        await show_edit_menu(callback, selected, user_id)
+        await callback.answer()
+    except Exception as e:
+        print(f"Select transaction error: {e}")
+        await callback.answer("⚠️ Ошибка выбора")
+
+@router.callback_query(F.data == "edit_transaction_category")
+async def start_category_selection(callback: CallbackQuery, state: FSMContext):
+    """Начало выбора категории"""
+    await state.set_state(UpdateTransactionForm.select_category)
+    user_id = callback.from_user.id
+
+    categories = await get_categories(user_id)
+    user_categories = [c for c in categories if c.get('user_id')]
+
+    if not user_categories:
+        await callback.answer("❌ Нет доступных категорий")
+        return
+
+    await state.update_data(all_categories=user_categories)
+    user_pages[user_id] = 0
+
+    await show_categories_page(callback, user_id, 0, user_categories)
+    await callback.answer()
+
+async def show_categories_page(
+    callback: CallbackQuery,
+    user_id: int,
+    page: int,
+    categories: list
+):
+    """Отображение страницы категорий"""
+    total_pages = max(1, (len(categories) + PAGE_SIZE - 1) // PAGE_SIZE)
+    start_idx = page * PAGE_SIZE
+    page_categories = categories[start_idx:start_idx + PAGE_SIZE]
+    
+    builder = InlineKeyboardBuilder()
+    
+    # Кнопки категорий
+    for cat in page_categories:
+        builder.button(
+            text=f"{cat['name_category']} ({'💰' if cat['type'] == 1 else '💸'})",
+            callback_data=f"select_cat_{cat['id']}"
+        )
+    
+    # Кнопки пагинации
+    if page > 0:
+        builder.button(text="⬅️ Назад", callback_data=f"cat_prev_{user_id}")
+    if page < total_pages - 1:
+        builder.button(text="Вперед ➡️", callback_data=f"cat_next_{user_id}")
+    
+    builder.button(text="◀ Назад", callback_data="back_to_edit_menu")
+    builder.button(text="❌ Отмена", callback_data="cancel_transaction_update")
+    
+    builder.adjust(1, *[1 for _ in page_categories], 2, 2)
+    
+    text = (
+        f"📋 Выберите категорию (стр. {page + 1}/{total_pages}):\n\n"
+        f"💰 - Доход\n💸 - Расход"
+    )
+    
+    await safe_edit_message(callback, text, builder)
+
+@router.callback_query(
+    F.data.startswith("cat_"),
+    UpdateTransactionForm.select_category
+)
+async def handle_category_pagination(callback: CallbackQuery, state: FSMContext):
+    """Пагинация категорий"""
+    try:
+        action = callback.data.split('_')[1]
+        user_id = int(callback.data.split('_')[2])
+        current_page = user_pages.get(user_id, 0)
+
+        data = await state.get_data()
+        categories = data.get('all_categories', [])
+        total_pages = max(1, (len(categories) + PAGE_SIZE - 1) // PAGE_SIZE)
+
+        new_page = current_page
+        if action == "prev":
+            new_page = max(0, current_page - 1)
+        elif action == "next":
+            new_page = min(total_pages - 1, current_page + 1)
+
+        if new_page != current_page:
+            user_pages[user_id] = new_page
+            await show_categories_page(callback, user_id, new_page, categories)
+
+        await callback.answer()
+    except Exception as e:
+        print(f"Category pagination error: {e}")
+        await callback.answer("⚠️ Ошибка пагинации")
+
+@router.callback_query(
+    F.data.startswith("select_cat_"),
+    UpdateTransactionForm.select_category
+)
+async def select_category_handler(callback: CallbackQuery, state: FSMContext):
+    """Выбор категории"""
+    try:
+        cat_id = int(callback.data.split('_')[2])
+        data = await state.get_data()
+        categories = data.get('all_categories', [])
+
+        selected = next((c for c in categories if c['id'] == cat_id), None)
+        if not selected:
+            await callback.answer("⚠️ Категория не найдена")
+            return
+
+        # Обновляем транзакцию
+        transaction = data['current_transaction'].copy()
+        transaction.update({
+            'category_id': selected['id'],
+            'category_name': selected['name_category']
+        })
+
+        await state.update_data(current_transaction=transaction)
+        await state.set_state(UpdateTransactionForm.confirmation)
+        await show_edit_menu(callback, transaction, callback.from_user.id)
+        await callback.answer(f"✅ Выбрано: {selected['name_category']}")
+    except Exception as e:
+        print(f"Select category error: {e}")
+        await callback.answer("⚠️ Ошибка выбора")
+
+@router.callback_query(F.data == "back_to_edit_menu")
+async def back_to_edit_menu(callback: CallbackQuery, state: FSMContext):
+    """Возврат в меню редактирования"""
+    data = await state.get_data()
+    await state.set_state(UpdateTransactionForm.confirmation)
+    await show_edit_menu(callback, data['current_transaction'], callback.from_user.id)
+    await callback.answer()
+
+@router.callback_query(F.data == "confirm_transaction_update")
+async def confirm_update_handler(callback: CallbackQuery, state: FSMContext):
+    """Подтверждение обновления"""
+    try:
+        data = await state.get_data()
+        tx_data = data['current_transaction']
+        user_id = callback.from_user.id
+
+        # --- Начало ИСПРАВЛЕННОГО блока преобразования даты ---
+        date_str = tx_data['date']
+        # Теперь мы знаем, что date_str может быть в двух форматах.
+        # Попробуем разобрать в каждом из них.
+        date_obj = None # Инициализируем как None
+
+        try:
+            # Попытка 1: Разобрать формат с сервера (YYYY-MM-DDTHH:MM:SS)
+            date_obj = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
+            # Если успешно, можно отформатировать в YYYY-MM-DD сразу
+            db_date = date_obj.strftime("%Y-%m-%d")
+        except ValueError:
+            try:
+                # Попытка 2: Разобрать формат после редактирования (ДД.ММ.ГГГГ)
+                date_obj = datetime.strptime(date_str, "%d.%m.%Y")
+                # Если успешно, отформатировать в YYYY-MM-DD
+                db_date = date_obj.strftime("%Y-%m-%d")
+            except ValueError:
+                 # Если ни один формат не подошел, это ошибка
+                await callback.message.edit_text(
+                    "⚠️ Ошибка: Не удалось распознать формат даты. Обратитесь к администратору бота.",
+                    reply_markup=None
+                )
+                await state.clear()
+                await callback.answer()
+                return # Прерываем выполнение
+
+        # В этом месте db_date будет содержать дату в формате YYYY-MM-DD,
+        # если парсинг прошел успешно
+
+        # --- Конец ИСПРАВЛЕННОГО блока преобразования даты ---
+
+        update_data = {
+            "description": tx_data.get('description'),
+            "full_sum": float(tx_data['full_sum']),
+            "date": db_date, # Используем правильно отформатированную дату для БД
+            "category_id": tx_data['category_id'],
+        }
+        # print(f"Отправляем на сервер для обновления: {update_data}") # Отладочный вывод
+
+        # !!! Важно: Убедитесь, что здесь вызывается update_transaction и НЕТ аргумента user_id !!!
+        await update_transaction(
+            transaction_id=data['transaction_id'],
+            update_data=update_data,
+            user_id=user_id
+        )
+
+        # Форматируем дату для отображения пользователю (используем date_obj из успешного парсинга)
+        display_date = date_obj.strftime("%d.%m.%Y") # Формат для отображения
+
+            # Получаем описание с безопасным доступом
+        description_text = tx_data.get('description', 'Нет описания')
+        # Получаем название категории с безопасным доступом
+        category_name_text = tx_data.get('category_name', 'Без категории')
+
+
+        await callback.message.edit_text(
+            "✅ Транзакция успешно обновлена!\n\n"
+            f"📁 Категория: {category_name_text}\n"
+            f"💰 Сумма: {float(tx_data['full_sum']):.2f} ₽\n"
+            f"📝 Описание: {description_text}\n"
+            f"📅 Дата: {display_date}" # Отображаем дату в привычном формате
+        )
+        await state.clear()
+
+    except Exception as e:
+        await callback.message.edit_text(f"❌ Произошла ошибка при обновлении записи: {str(e)}")
+    finally:
+        await callback.answer()
+
+@router.callback_query(F.data == "cancel_transaction_update")
+async def cancel_update_handler(callback: CallbackQuery, state: FSMContext):
+    """Отмена обновления"""
+    await state.clear()
+    await callback.message.edit_text("❌ Редактирование отменено")
+    await callback.answer()
+
+# Обработчики редактирования других полей (аналогично категории)
+@router.callback_query(F.data == "edit_transaction_amount")
+async def edit_amount_handler(callback: CallbackQuery, state: FSMContext):
+    """Редактирование суммы"""
+    await state.set_state(UpdateTransactionForm.new_value)
+    await state.update_data(edit_field="amount")
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text="◀ Назад", callback_data="back_to_edit_menu")
+    builder.button(text="❌ Отмена", callback_data="cancel_transaction_update")
+    builder.adjust(2)
+
+    await callback.message.edit_text(
+        "💰 Введите новую сумму (например: 1500.50):",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "edit_transaction_description")
+async def edit_description_handler(callback: CallbackQuery, state: FSMContext):
+    """Редактирование описания"""
+    await state.set_state(UpdateTransactionForm.new_value)
+    await state.update_data(edit_field="description")
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text="◀ Назад", callback_data="back_to_edit_menu")
+    builder.button(text="❌ Отмена", callback_data="cancel_transaction_update")
+    builder.adjust(2)
+
+    await callback.message.edit_text(
+        "📝 Введите новое описание:",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "edit_transaction_date")
+async def edit_date_handler(callback: CallbackQuery, state: FSMContext):
+    """Редактирование даты"""
+    await state.set_state(UpdateTransactionForm.new_value)
+    await state.update_data(edit_field="date")
+
+    builder = InlineKeyboardBuilder()
+    builder.button(text="📅 Сегодня", callback_data="use_today_date")
+    builder.button(text="◀ Назад", callback_data="back_to_edit_menu")
+    builder.button(text="❌ Отмена", callback_data="cancel_transaction_update")
+    builder.adjust(2, 1)
+
+    await callback.message.edit_text(
+        "📅 Введите дату (ДД.ММ.ГГГГ) или нажмите 'Сегодня':",
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+@router.callback_query(F.data == "use_today_date")
+async def use_today_date_handler(callback: CallbackQuery, state: FSMContext):
+    """Использование текущей даты"""
+    today = datetime.now().strftime("%d.%m.%Y")
+    await process_field_update(callback, today, state)
+    await callback.answer()
+
+@router.message(UpdateTransactionForm.new_value)
+async def process_new_value(message: Message, state: FSMContext):
+    """Обработка нового значения"""
+    await process_field_update(message, message.text, state)
+
+async def process_field_update(
+    source: Union[Message, CallbackQuery],
+    value: str,
+    state: FSMContext
+):
+    """Общая обработка обновления поля"""
+    data = await state.get_data()
+    field = data['edit_field']
+    transaction = data['current_transaction'].copy()
+
+    try:
+        if field == "amount":
+            new_value = float(value.replace(',', '.'))
+            if new_value <= 0:
+                raise ValueError("Сумма должна быть положительной")
+            transaction['full_sum'] = new_value
+        elif field == "date":
+            datetime.strptime(value, "%d.%m.%Y")  # Валидация формата ДД.ММ.ГГГГ
+            transaction['date'] = value
+        else:
+            transaction[field] = value
+
+        await state.update_data(current_transaction=transaction)
+        await state.set_state(UpdateTransactionForm.confirmation)
+        # Определяем user_id в зависимости от типа источника (Message или CallbackQuery)
+        user_id = source.from_user.id if isinstance(source, Message) else source.from_user.id
+        await show_edit_menu(source, transaction, user_id)
+
+    except ValueError as e:
+        error_msg = {
+            "amount": "⚠️ Введите корректную сумму (например: 1500.50)",
+            "date": "⚠️ Введите дату в формате ДД.ММ.ГГГГ"
+        }.get(field, "⚠️ Некорректное значение")
+
+        if isinstance(source, Message):
+            await source.answer(error_msg)
+        else:
+            await source.message.answer(error_msg)
+
+
+async def safe_edit_message(
+    callback: CallbackQuery,
+    text: str,
+    reply_markup: Optional[InlineKeyboardBuilder] = None
+):
+    """Безопасное редактирование сообщения с обработкой ошибок"""
+    try:
+        await callback.message.edit_text(
+            text=text,
+            reply_markup=reply_markup.as_markup() if reply_markup else None
         )
     except Exception as e:
-            print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+        if "not modified" not in str(e):
+            print(f"Error editing message: {e}")
 
+async def format_transaction_details(transaction: Dict[str, Any]) -> str:
+    """Форматирование данных транзакции"""
+    return (
+        "✏️ Редактирование транзакции:\n\n"
+        f"1. 📁 Категория: {transaction.get('category_name', 'Без категории')}\n"
+        f"2. 💰 Сумма: {float(transaction.get('full_sum', 0)):.2f} ₽\n"
+        f"3. 📝 Описание: {transaction.get('description', 'Нет описания')}\n"
+        f"4. 📅 Дата: {transaction.get('date', 'Не указана')[:10]}\n\n"
+        "Выберите что изменить:"
+    )
 
 
 
@@ -605,6 +953,10 @@ async def handle_delete_flow(user_id: int, message: Message, state: FSMContext):
         keyboard = await build_pagination_keyboard_for_delete(0, total_pages, user_id)
         await message.answer('🙂 Вот список ваших записей! Какую из них хотите удалить?\n\n'+message_text,
                            reply_markup=keyboard)
+        await message.answer(
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
+    )
     except Exception as e:
         await message.answer(f"Ошибка при получении записи: {e}")
 
@@ -636,7 +988,7 @@ async def handle_pagination_for_delete(callback: CallbackQuery, state: FSMContex
         message_text, total_pages = await get_paginated_transactions(user_id, new_page)
         keyboard = await build_pagination_keyboard_for_delete(new_page, total_pages, user_id)
         
-        await state.update_data(original_message=message_text)
+        await state.tdata(original_message=message_text)
         await callback.message.edit_text(text=message_text, reply_markup=keyboard)
         await callback.answer()
         
@@ -705,6 +1057,10 @@ async def show_transactions(message: Message):
         message_text, total_pages = await get_paginated_transactions(user_id, 0)
         keyboard = await build_pagination_keyboard_for_show(0, total_pages, user_id)
         await message.answer('📂 Вот список всех записей😊 :\n\n'+message_text, reply_markup=keyboard)
+        await message.answer(
+        "⬆️⬆️",
+        reply_markup=ReplyKeyboardRemove()
+    )
     except Exception as e:
         await message.answer(f"Ошибка при получении записи: {e}")
 

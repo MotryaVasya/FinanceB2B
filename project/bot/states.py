@@ -21,6 +21,13 @@ class TransactionStates(StatesGroup):
     update_for_transaction_amount=State()
     update_no_sets=State()
 
+class UpdateTransactionForm(StatesGroup):
+    select_transaction = State()
+    edit_field = State()
+    select_category = State()
+    new_value = State()
+    confirmation = State()
+
 class CategoryStates(StatesGroup):
     waiting_for_category_name = State()
     waiting_for_category_type = State()
