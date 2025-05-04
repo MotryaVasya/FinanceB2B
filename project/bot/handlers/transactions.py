@@ -446,7 +446,7 @@ async def cancel_transaction(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text(
         "❌ Добавление записи отменено",
-        reply_markup=None
+        reply_markup=await start_keyboard()
     )
     await callback.answer()
 
@@ -798,8 +798,8 @@ async def confirm_update_handler(callback: CallbackQuery, state: FSMContext):
 async def cancel_update_handler(callback: CallbackQuery, state: FSMContext):
     """Отмена обновления"""
     await state.clear()
-    await callback.message.edit_text("❌ Редактирование отменено")
-    await callback.answer()
+    await callback.message.answer("❌ Редактирование отменено",
+                                  reply_markup=await start_keyboard())
 
 # Обработчики редактирования других полей (аналогично категории)
 @router.callback_query(F.data == "edit_transaction_amount")
@@ -1044,6 +1044,12 @@ async def cancel_delete_transaction(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("🙂 Хотите удалить другую запись или вернуться в главное меню?",
             reply_markup=builder.as_markup())
     await state.clear()
+@router.callback_query(F.data == "back_to_menu")
+async def cancel_delete_transaction(callback: CallbackQuery, state: FSMContext):
+    builder = await back_menu_or_list_transactions()
+    await callback.message.answer("🙂Мы вернулись в главное меню.",
+            reply_markup=await start_keyboard())
+    await state.clear()
 
 
 
@@ -1087,3 +1093,9 @@ async def handle_pagination_for_show(callback: CallbackQuery):
     except Exception as e:
         print(f"Ошибка пагинации: {e}")
         await callback.answer(f"Произошла ошибка, попробуйте позже")
+
+@router.callback_query(F.data == "show_cancel")
+async def cancel_delete_transaction(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("🙂Мы вернулись в главное меню.",
+            reply_markup=await start_keyboard())
+    await state.clear()

@@ -27,6 +27,7 @@ class UpdateTransactionForm(StatesGroup):
     select_category = State()
     new_value = State()
     confirmation = State()
+    enter_page_number = State()
 
 class CategoryStates(StatesGroup):
     waiting_for_category_name = State()
