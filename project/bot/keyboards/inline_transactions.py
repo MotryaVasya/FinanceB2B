@@ -124,6 +124,7 @@ async def build_pagination_keyboard_for_delete(page: int, total_pages: int, user
         else:
             builder.button(text=">>", callback_data=f"transactionD_last_{user_id}")  # В конец
 
+    builder.button(text="❌ Отмена", callback_data="cancel_delete")  # В конец
     builder.adjust(3, 2)
     return builder.as_markup()
 

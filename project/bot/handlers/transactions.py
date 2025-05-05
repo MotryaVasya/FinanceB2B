@@ -443,7 +443,7 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "addtx_cancel")
 async def cancel_transaction(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text(
+    await callback.message.answer(
         "❌ Добавление записи отменено",
         reply_markup=await start_keyboard()
     )
@@ -939,10 +939,6 @@ async def format_transaction_details(transaction: Dict[str, Any]) -> str:
 @router.message(F.text == 'Удалить запись')
 async def delete_transaction_message(message: Message, state: FSMContext):
     await handle_delete_flow(message.from_user.id, message, state)
-    await message.answer(
-        "⬆️⬆️",
-        reply_markup=ReplyKeyboardRemove()
-    )
 
 @router.callback_query(F.data == 'back_to_list_transactions')
 async def back_to_list_callback(callback: CallbackQuery, state: FSMContext):
@@ -1047,6 +1043,7 @@ async def cancel_delete_transaction(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("🙂 Хотите удалить другую запись или вернуться в главное меню?",
             reply_markup=builder.as_markup())
     await state.clear()
+
 @router.callback_query(F.data == "back_to_menu")
 async def cancel_delete_transaction(callback: CallbackQuery, state: FSMContext):
     builder = await back_menu_or_list_transactions()
