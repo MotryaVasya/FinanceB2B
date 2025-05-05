@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery,ReplyKeyboardRemove
 from project.bot.conecting_methods.category import get_categories
 from project.bot.conecting_methods.methods import check_action
 from project.bot.handlers.statistic import get_month_name
-from project.bot.keyboards.calendar_keyboard import generate_calendar, get_calendar_keyboard
+from project.bot.keyboards.calendar_keyboard import generate_calendar, generate_edit_calendar, get_calendar_keyboard, get_edit_calendar_keyboard
 from project.bot.messages.messages import *
 from aiogram.fsm.context import FSMContext
 from project.bot.states import *
@@ -426,10 +426,10 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
         # Здесь вызываем метод для создания записи в БД
         await create_transaction(params={'user_id': callback.from_user.id}, data=transaction_data)
         
-        await callback.message.edit_text(
+        await callback.message.answer(
             "✅ Ваша запись успешно добавлена!\n"
             "🔙 Возвращаемся в главное меню!\n",
-            reply_markup=None
+            reply_markup=await start_keyboard()
         )
     except Exception as e:
         await callback.message.edit_text(
@@ -779,12 +779,12 @@ async def confirm_update_handler(callback: CallbackQuery, state: FSMContext):
         category_name_text = tx_data.get('category_name', 'Без категории')
 
 
-        await callback.message.edit_text(
+        await callback.message.answer(
             "✅ Транзакция успешно обновлена!\n\n"
             f"📁 Категория: {category_name_text}\n"
             f"💰 Сумма: {float(tx_data['full_sum']):.2f} ₽\n"
             f"📝 Описание: {description_text}\n"
-            f"📅 Дата: {display_date}" # Отображаем дату в привычном формате
+            f"📅 Дата: {display_date}", reply_markup= await start_keyboard()
         )
         await state.clear()
 
@@ -837,20 +837,52 @@ async def edit_description_handler(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "edit_transaction_date")
 async def edit_date_handler(callback: CallbackQuery, state: FSMContext):
-    """Редактирование даты"""
+    """Редактирование даты через календарь"""
     await state.set_state(UpdateTransactionForm.new_value)
     await state.update_data(edit_field="date")
 
-    builder = InlineKeyboardBuilder()
-    builder.button(text="📅 Сегодня", callback_data="use_today_date")
-    builder.button(text="◀ Назад", callback_data="back_to_edit_menu")
-    builder.button(text="❌ Отмена", callback_data="cancel_transaction_update")
-    builder.adjust(2, 1)
-
+    keyboard = await get_edit_calendar_keyboard()
     await callback.message.edit_text(
-        "📅 Введите дату (ДД.ММ.ГГГГ) или нажмите 'Сегодня':",
-        reply_markup=builder.as_markup()
+        "📅 Выберите новую дату из календаря:",
+        reply_markup=keyboard
     )
+    await callback.answer()
+
+@router.callback_query(F.data.startswith("edit_calendar_"))
+async def handle_edit_calendar_actions(callback: types.CallbackQuery, state: FSMContext):
+    action = callback.data.split("_")[2]
+    
+    if action == "day":
+        # Обработка выбора дня
+        _, _, _, year, month, day = callback.data.split("_")
+        selected_date = f"{day}.{month}.{year}"  # Формат для отображения
+        
+        await process_field_update(callback, selected_date, state)
+        
+    elif action == "prev":
+        # Переход к предыдущему месяцу
+        _, _, _, year, month = callback.data.split("_")
+        year, month = int(year), int(month)
+        if month == 1:
+            year -= 1
+            month = 12
+        else:
+            month -= 1
+        keyboard = generate_edit_calendar(year, month)
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
+        
+    elif action == "next":
+        # Переход к следующему месяцу
+        _, _, _, year, month = callback.data.split("_")
+        year, month = int(year), int(month)
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+        keyboard = generate_edit_calendar(year, month)
+        await callback.message.edit_reply_markup(reply_markup=keyboard)
+    
     await callback.answer()
 
 @router.callback_query(F.data == "use_today_date")
