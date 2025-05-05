@@ -48,6 +48,6 @@ jobs:
           script: |
             cd /usr/bin/deploy
             echo "${{ github.token }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
-            sudo docker compose pull
-            sudo docker compose up -d
+            sudo docker compose -f docker-compose.prod.yml pull
+            sudo docker compose -f docker-compose.prod.yml up -d
             sudo docker image prune -f || true
