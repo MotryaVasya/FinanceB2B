@@ -51,7 +51,7 @@ services:
           memory: '128M'
   bot:
     <<: [*env]
-    image: ghcr.io/MotryaVasya/FinanceB2B/finance-bot:latest
+    image: ghcr.io/motryavasya/financeb2b/finance-bot:latest
     pull_policy: always
     restart: unless-stopped
     container_name: bot-service
