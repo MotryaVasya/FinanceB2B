@@ -1,0 +1,75 @@
+version: "3.9"
+
+x-env: &env   
+    env_file:
+      - ${ENV_FILE:-.env}
+services:
+  nginx-service:
+    container_name: nginx-service
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+    volumes:
+      - nginx-data:/data
+      - letsencrypt:/etc/letsencrypt
+    depends_on:
+      - nginx-db
+  nginx-db:
+    image: postgres:17.4-alpine
+    container_name: nginx-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DB_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_POSTGRES_NAME}
+    volumes:
+      - nginx-db:/var/lib/mysql
+  db:  
+    <<: [*env]
+    image: postgres:17.4-alpine
+    container_name: bot-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - botdb-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s    
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '512M'
+        reservations:
+          memory: '128M'
+  bot:
+    <<: [*env]
+    image: ghcr.io/MotryaVasya/FinanceB2B/finance-bot:latest
+    pull_policy: always
+    restart: unless-stopped
+    container_name: bot-service
+    entrypoint: sh -c "alembic upgrade head || true && uvicorn main:app --host 0.0.0.0"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  botdb-data:
+  nginx-data:
+  letsencrypt:
+  nginx-db:
