@@ -112,7 +112,7 @@ async def handle_pagination_for_categories(callback: CallbackQuery, state: FSMCo
             message_text = await format_categories_page(categories, current_page)
             keyboard = await build_pagination_keyboard_for_categories(current_page, total_pages, user_id)
             await callback.message.edit_text(
-                text="Выберите категорию для новой записи:\n\n" + message_text,
+                text="💸 Давайте создадим новую запись! Пожалуйста, выберите категорию:\n\n" + message_text,
                 reply_markup=keyboard
             )
             await callback.answer()
@@ -138,7 +138,7 @@ async def handle_pagination_for_categories(callback: CallbackQuery, state: FSMCo
             message_text = await format_categories_page(categories, new_page)
             keyboard = await build_pagination_keyboard_for_categories(new_page, total_pages, user_id)
             await callback.message.edit_text(
-                text="Выберите категорию для новой записи:\n\n" + message_text,
+                text="💸 Давайте создадим новую запись! Пожалуйста, выберите категорию:\n\n" + message_text,
                 reply_markup=keyboard
             )
             
