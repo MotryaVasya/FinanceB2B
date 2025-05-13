@@ -15,7 +15,7 @@ from project.db.crud import category as crud
 from project.db.schemas.category import CategoryCreate, CategoryUpdate
 from project.db.models.category import Category # TODO потом поменять импорт из category
 
-async def create(user_id: str, session: AsyncSession, data: CategoryCreate)-> Category | None:
+async def create(user_id: int, session: AsyncSession, data: CategoryCreate)-> Category | None:
     """Создает новую категорию.
 
     Args:
@@ -39,7 +39,7 @@ async def get(session: AsyncSession, category_id: int) -> Category | None:
     """
     return await crud.get_category(session, category_id)
 
-async def get_all(user_id: str, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
+async def get_all(user_id: int, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
     """Получает список категорий с пагинацией.
     
     Args:

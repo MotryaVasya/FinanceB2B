@@ -59,7 +59,7 @@ async def get_transaction(transaction_id: int):
         logging.error(f"Произошла ошибка при получении транзакции: {str(e)}")
         raise httpx.HTTPStatusError(message="Произошла ошибка при получении транзакции")
 
-async def get_transactions(user_id: str):
+async def get_transactions(user_id: int):
     """
     Получает все транзакции пользователя.
 
@@ -88,7 +88,7 @@ async def get_transactions(user_id: str):
         logging.error(f"Произошла ошибка при получении транзакции: {str(e)}")
         raise httpx.HTTPStatusError(message="Произошла ошибка при получении транзакции")    
 
-async def update_transaction(user_id: str,transaction_id: int, update_data: dict):
+async def update_transaction(user_id:int,transaction_id: int, update_data: dict):
     """
     Обновляет данные транзакции по её ID.
 

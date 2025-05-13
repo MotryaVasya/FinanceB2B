@@ -5,7 +5,7 @@ from typing import Optional
 class UserBase(BaseModel):
     firstname: str
     secondname: Optional[str] = None
-    tg_id: str
+    tg_id: int
     cash: float
 
 class UserCreate(UserBase):

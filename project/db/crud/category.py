@@ -50,7 +50,7 @@ from sqlalchemy.exc import DataError, ProgrammingError, NoResultFound, DatabaseE
 from project.db.models.category import Category, User # TODO потом поменять импорт из category
 from project.db.schemas.category import CategoryCreate, CategoryUpdate
 
-async def create_category(user_id: str, session: AsyncSession, data: CategoryCreate) -> Category | None:
+async def create_category(user_id: int, session: AsyncSession, data: CategoryCreate) -> Category | None:
     """
     Создает новую категорию в базе данных.
 
@@ -114,7 +114,7 @@ async def get_category(session: AsyncSession, category_id: int, as_pydantic: boo
         }))
         return None
 
-async def get_all_categories(user_id: str, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
+async def get_all_categories(user_id: int, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
     """
     Получает список категорий с диапозоном.
 

@@ -27,7 +27,7 @@ async def create(session: AsyncSession, data: UserCreate)-> User | None:
     """
     return await crud.create_user(session, data)
 
-async def get(session: AsyncSession, user_id: str) -> User | None:
+async def get(session: AsyncSession, user_id: int) -> User | None:
     """Получает пользователя по идентификатору.
     
     Args:
@@ -52,7 +52,7 @@ async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> lis
     """
     return await crud.get_all_users(session, skip, limit)
 
-async def update(session: AsyncSession, user_id: str, data: UserUpdate) -> User | None:
+async def update(session: AsyncSession, user_id: int, data: UserUpdate) -> User | None:
     """Обновляет данные пользователя.
     
     Args:
@@ -65,7 +65,7 @@ async def update(session: AsyncSession, user_id: str, data: UserUpdate) -> User 
     """
     return await crud.update_user(session, user_id, data)
 
-async def delete(session: AsyncSession, user_id: str) -> bool:
+async def delete(session: AsyncSession, user_id: int) -> bool:
     """Удаляет пользователя.
     
     Args:

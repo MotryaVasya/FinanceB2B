@@ -27,7 +27,7 @@ async def create_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
         }))
 
 @router.get('/{user_id}', response_model=UserOut)
-async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     try:
         user = await user_service.get(db, user_id)
         if user is None:
@@ -58,7 +58,7 @@ async def get_users(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(
             "time": datetime.now().isoformat(),
         }))
 @router.put('/{user_id}', response_model=UserOut)
-async def update_user(user_id: str, data: UserUpdate, db: AsyncSession = Depends(get_db)):
+async def update_user(user_id: int, data: UserUpdate, db: AsyncSession = Depends(get_db)):
     try:
         user = await user_service.update(db, user_id, data)
         if not user:
@@ -76,7 +76,7 @@ async def update_user(user_id: str, data: UserUpdate, db: AsyncSession = Depends
         }))
 
 @router.delete('/{user_id}')
-async def delete_user(user_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
     try:
         success = await user_service.delete(db, user_id)
         if not success:
