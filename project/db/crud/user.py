@@ -76,7 +76,7 @@ async def create_user(session: AsyncSession, data: UserCreate) -> User | None:
         }))
         return None
 
-async def get_user(session: AsyncSession, user_id: str) -> User | None:
+async def get_user(session: AsyncSession, user_id: int) -> User | None:
     """
     Получает пользователя по его идентификатору.
 
@@ -87,7 +87,7 @@ async def get_user(session: AsyncSession, user_id: str) -> User | None:
     Returns:
         User: Объект пользователя, если найден, иначе None.
     """
-    if int(user_id) <= 0:
+    if user_id <= 0:
         return None
     try:
         user = await session.execute(select(User).where(User.tg_id == user_id))
@@ -136,7 +136,7 @@ async def get_all_users(session: AsyncSession, skip: int = 0, limit: int = 100) 
         }))
         return []
         
-async def update_user(session: AsyncSession, user_id: str, data: UserUpdate) -> User | None:
+async def update_user(session: AsyncSession, user_id: int, data: UserUpdate) -> User | None:
     """
     Обновляет данные пользователя.
 
@@ -148,7 +148,7 @@ async def update_user(session: AsyncSession, user_id: str, data: UserUpdate) -> 
     Returns:
         User: Обновленный объект пользователя или None, если пользователь не найден.
     """
-    if str(user_id) <= 0:
+    if user_id <= 0:
         return None
     try:
         user = await get_user(session, user_id)
@@ -173,7 +173,7 @@ async def update_user(session: AsyncSession, user_id: str, data: UserUpdate) -> 
         }))
         return None
 
-async def delete_user(session: AsyncSession, user_id: str) -> bool:
+async def delete_user(session: AsyncSession, user_id: int) -> bool:
     """
     Удаляет транзакцию по её идентификатору.
 
@@ -184,7 +184,7 @@ async def delete_user(session: AsyncSession, user_id: str) -> bool:
     Returns:
         bool: True, если пользователь удален, False если пользователь не найден.
     """
-    if str(user_id) <= 0:
+    if user_id <= 0:
         return False
     try:
         user = await get_user(session, user_id)

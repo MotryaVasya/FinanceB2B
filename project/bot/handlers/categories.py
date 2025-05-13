@@ -148,7 +148,7 @@ async def confirm_creation(callback: CallbackQuery, state: FSMContext):
             "type": data['type'],
         }
         
-        await create_category(category_data, {"user_id": str(user_id)})
+        await create_category(category_data, {"user_id": user_id})
         await callback.message.answer(
             f"✅ Категория успешно создана!\n\n"
             f"Название: {data['name']}\n"
@@ -356,7 +356,7 @@ async def start_update_category(message: Message, state: FSMContext):
     
     try:
         # Получаем только пользовательские категории (где есть user_id)
-        all_categories = await get_categories(str(user_id))
+        all_categories = await get_categories(user_id)
         user_categories = [cat for cat in all_categories if cat.get('user_id')]
         
         # Сохраняем список категорий в state

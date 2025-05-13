@@ -10,7 +10,7 @@ from project.services import transaction_service
 router = APIRouter(prefix='/transactions', tags=['Transactions'])
 
 @router.post('/', response_model=TransactionOut)
-async def create_transaction(user_id: str, data: TransactionCreate, db: AsyncSession = Depends(get_db)):
+async def create_transaction(user_id: int, data: TransactionCreate, db: AsyncSession = Depends(get_db)):
     """
     Создаёт новую транзакцию в базе данных.
 
@@ -33,7 +33,7 @@ async def create_transaction(user_id: str, data: TransactionCreate, db: AsyncSes
         }))
 
 @router.get('/', response_model=list[TransactionOut])
-async def get_transactions(user_id: str, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def get_transactions(user_id: int, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     """
     Получает список всех транзакций с поддержкой пагинации.
 
@@ -57,7 +57,7 @@ async def get_transactions(user_id: str, skip: int = 0, limit: int = 100, db: As
         }))
 
 @router.get("/get_statistics", response_model=TransactionStatistics)
-async def get_top_categories_by_user(from_date: datetime, to_date: datetime, user_id: str, db: AsyncSession = Depends(get_db)):
+async def get_top_categories_by_user(from_date: datetime, to_date: datetime, user_id: int, db: AsyncSession = Depends(get_db)):
     """
     Получает статистику по транзакциям пользователя за указанный период:
     доходы, расходы и топ-3 категории.
@@ -108,7 +108,7 @@ async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db
         }))
 
 @router.get('/from_month/{month}', response_model=TransactionStatistics)
-async def get_transactions(month: int, user_id: str, db: AsyncSession = Depends(get_db)):
+async def get_transactions(month: int, user_id: int, db: AsyncSession = Depends(get_db)):
     """
     Получает статистику транзакций пользователя за указанный месяц.
 
@@ -132,7 +132,7 @@ async def get_transactions(month: int, user_id: str, db: AsyncSession = Depends(
         }))
 
 @router.put('/{transaction_id}', response_model=TransactionOut)
-async def update_transaction(user_id: str, transaction_id: int, data: TransactionUpdate, db: AsyncSession = Depends(get_db)):
+async def update_transaction(user_id: int, transaction_id: int, data: TransactionUpdate, db: AsyncSession = Depends(get_db)):
     """
     Обновляет информацию о транзакции по её ID.
 
