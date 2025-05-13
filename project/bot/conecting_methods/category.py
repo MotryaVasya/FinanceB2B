@@ -26,7 +26,7 @@ async def get_category(category_id: int):
         logging.error(f"Произошла ошибка при получении категории: {str(e)}")
         raise httpx._exceptions.HTTPStatusError(message="Произошла ошибка при получении категории")
     
-async def get_categories(user_id: int):
+async def get_categories(user_id: str):
     try:
         async with httpx.AsyncClient() as client:
             params = {'user_id': user_id}

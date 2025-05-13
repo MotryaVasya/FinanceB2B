@@ -206,7 +206,7 @@ async def check_date(month):
         to_date = datetime(year, month + 1, 1) - timedelta(seconds=1)
     return from_date, to_date
 
-async def create_transaction(user_id: int, session: AsyncSession, data: TransactionCreate) -> Transaction | None:
+async def create_transaction(user_id: str, session: AsyncSession, data: TransactionCreate) -> Transaction | None:
     """
     Создает новую транзакцию в базе данных.
 
@@ -291,7 +291,7 @@ async def get_transaction(session: AsyncSession, transaction_id: int, as_pydanti
         }))
         return None
 
-async def get_all_transactions(user_id: int, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
+async def get_all_transactions(user_id: str, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
     """
     Получает список транзакций с диапозоном.
 
@@ -334,7 +334,7 @@ async def get_all_transactions(user_id: int, session: AsyncSession, skip: int = 
         }))
         return []
         
-async def update_transaction(user_id: int, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
+async def update_transaction(user_id: str, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
     """
     Обновляет транзакцию в базе данных по указанному ID.
 
@@ -431,7 +431,7 @@ async def delete_transaction(session: AsyncSession, transaction_id: int) -> bool
         return False
 
 
-async def get_transactions_from_month(session: AsyncSession, month: int, user_id: int) -> TransactionStatistics:
+async def get_transactions_from_month(session: AsyncSession, month: int, user_id: str) -> TransactionStatistics:
     """
     Получает статистику транзакций пользователя за указанный месяц, включая общий доход, расход и топ-3 категории.
 
@@ -540,7 +540,7 @@ async def get_transactions_from_month(session: AsyncSession, month: int, user_id
         )
         return statistic
 
-async def get_statistics(session: AsyncSession, from_date: datetime, to_date: datetime, user_id: int) -> TransactionStatistics:
+async def get_statistics(session: AsyncSession, from_date: datetime, to_date: datetime, user_id: str) -> TransactionStatistics:
     """
     Получает статистику по транзакциям пользователя за указанный период: доходы, расходы и топ-3 категории.
     

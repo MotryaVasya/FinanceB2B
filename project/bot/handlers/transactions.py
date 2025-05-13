@@ -420,7 +420,7 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext):
             "full_sum": data['amount'],
             "date": data.get('date', datetime.now().strftime("%Y-%m-%d")),
             "category_id": data['category_id'],
-            'user_id': callback.from_user.id
+            'user_id': str(callback.from_user.id)
         }
         
         # Здесь вызываем метод для создания записи в БД
@@ -721,7 +721,7 @@ async def confirm_update_handler(callback: CallbackQuery, state: FSMContext):
     try:
         data = await state.get_data()
         tx_data = data['current_transaction']
-        user_id = callback.from_user.id
+        user_id = str(callback.from_user.id)
 
         # --- Начало ИСПРАВЛЕННОГО блока преобразования даты ---
         date_str = tx_data['date']
@@ -1088,7 +1088,7 @@ async def cancel_delete_transaction(callback: CallbackQuery, state: FSMContext):
 
 @router.message(F.text == 'История моих записей')
 async def show_transactions(message: Message):
-    user_id = message.from_user.id
+    user_id = str(message.from_user.id)
     user_pages[user_id] = 0  # Сбрасываем на первую страницу
     
     try:
