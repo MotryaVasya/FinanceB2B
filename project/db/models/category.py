@@ -1,6 +1,6 @@
 from datetime import datetime
 from venv import logger
-from sqlalchemy import CheckConstraint, Integer, String, Numeric, DateTime, ForeignKey
+from sqlalchemy import CheckConstraint, Integer, String, Numeric, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional
 
@@ -18,7 +18,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     firstname: Mapped[str] = mapped_column(String, nullable=False)
     secondname: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    tg_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    tg_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     cash: Mapped[float] = mapped_column(Numeric, nullable=False)
 
     categories: Mapped[list["Category"]] = relationship(back_populates="user", cascade="all, delete-orphan")
