@@ -17,7 +17,7 @@ from project.db.crud import transaction as crud
 from project.db.schemas.transaction import TransactionCreate, TransactionStatistics, TransactionUpdate
 from project.db.models.category import Transaction # TODO потом поменять импорт из category
 
-async def create(user_id: int, session: AsyncSession, data: TransactionCreate)-> Transaction | None:
+async def create(user_id: str, session: AsyncSession, data: TransactionCreate)-> Transaction | None:
     """Создает новую транзакцию.
 
     Args:
@@ -41,7 +41,7 @@ async def get(session: AsyncSession, transaction_id: int) -> Transaction | None:
     """
     return await crud.get_transaction(session, transaction_id)
 
-async def get_all(user_id: int, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
+async def get_all(user_id: str, session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
     """Получает список транзакций с пагинацией.
     
     Args:
@@ -54,7 +54,7 @@ async def get_all(user_id: int, session: AsyncSession, skip: int = 0, limit: int
     """
     return await crud.get_all_transactions(user_id, session, skip, limit)
 
-async def update(user_id: int, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
+async def update(user_id: str, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
     """Обновляет данные транзакции.
     
     Args:
@@ -79,7 +79,7 @@ async def delete(session: AsyncSession, transaction_id: int) -> bool:
     """
     return await crud.delete_transaction(session, transaction_id)
 
-async def get_from_month(session: AsyncSession, month: int, user_id: int) -> list[Transaction]:
+async def get_from_month(session: AsyncSession, month: int, user_id: str) -> list[Transaction]:
     """Получает список транзакций за указанный диапазон дат.
 
     Args:
@@ -92,7 +92,7 @@ async def get_from_month(session: AsyncSession, month: int, user_id: int) -> lis
     """
     return await crud.get_transactions_from_month(session, month, user_id)
 
-async def get_statistics(session: AsyncSession, from_date: datetime, to_date: datetime, user_id: int) -> TransactionStatistics:
+async def get_statistics(session: AsyncSession, from_date: datetime, to_date: datetime, user_id: str) -> TransactionStatistics:
     """
     Получает топ-3 категории по количеству транзакций для указанного пользователя в указанный период времени.
 

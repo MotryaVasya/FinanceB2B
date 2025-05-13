@@ -25,7 +25,7 @@ async def start_handler(message: Message, state: FSMContext, is_start: bool = Fa
         if is_start:
             data = {'firstname': message.from_user.first_name, 
                     'secondname': message.from_user.last_name, 
-                    'tg_id': message.from_user.id,
+                    'tg_id': str(message.from_user.id),
                     'cash': 0}
 
             await user.create_user(data=data)

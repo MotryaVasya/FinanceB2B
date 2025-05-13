@@ -1,7 +1,7 @@
 PAGE_SIZE = 3  # Количество транзакций на странице
 user_pages = {} # Словарь для хранения текущей страницы пользователя {user_id: page}
 
-async def get_paginated_transactions(user_id: int, page: int = 0):
+async def get_paginated_transactions(user_id: str, page: int = 0):
     from project.bot.conecting_methods.transactions import get_transactions
     all_transactions = await get_transactions(user_id)
     total_pages = (len(all_transactions) + PAGE_SIZE - 1) // PAGE_SIZE
@@ -26,7 +26,7 @@ async def get_paginated_transactions(user_id: int, page: int = 0):
     
     return message, total_pages
 
-async def get_paginated_category(user_id: int, page: int = 0, for_show: bool = False):
+async def get_paginated_category(user_id: str, page: int = 0, for_show: bool = False):
     from project.bot.conecting_methods.category import get_categories
     all_categories = await get_categories(user_id)
     
