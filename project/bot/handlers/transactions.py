@@ -335,10 +335,6 @@ async def show_confirmation(update: Union[Message, CallbackQuery], state: FSMCon
     # Создаем клавиатуру для подтверждения/редактирования
     builder = InlineKeyboardBuilder()
     builder.button(text="✅ Подтвердить", callback_data="addtx_confirm")
-    builder.button(text="✏️ Категория", callback_data="addtx_edit_category")
-    builder.button(text="✏️ Сумма", callback_data="addtx_edit_amount")
-    builder.button(text="✏️ Описание", callback_data="addtx_edit_description")
-    builder.button(text="✏️ Дата", callback_data="addtx_edit_date")
     builder.button(text="❌ Отмена", callback_data="addtx_cancel")
     builder.adjust(2, 2, 2)
     
