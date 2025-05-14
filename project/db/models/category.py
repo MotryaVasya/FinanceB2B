@@ -18,7 +18,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     firstname: Mapped[str] = mapped_column(String, nullable=False)
     secondname: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    tg_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    tg_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
     cash: Mapped[float] = mapped_column(Numeric, nullable=False)
 
     categories: Mapped[list["Category"]] = relationship(back_populates="user", cascade="all, delete-orphan")

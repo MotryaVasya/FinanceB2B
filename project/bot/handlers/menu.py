@@ -3,7 +3,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from project.bot.messages.messages import *
 from aiogram.types import Message
-from aiogram.filters import or_f
+from aiogram.filters import or_f, Command
 from project.bot.states import *
 from project.bot.Save import save
 from project.bot.handlers.start import Context
@@ -14,6 +14,7 @@ from project.bot.keyboards.reply import (
     get_transaction_keyboard,
     help_keyboard,
 )
+from project.db.session import drop_db
 router=Router()
 from project.bot.conecting_methods.user import get_user
 @router.message(F.text == "Помощь")
@@ -81,3 +82,7 @@ async def transaction_handler(message: Message, state: FSMContext):
             reply_markup=await get_transaction_keyboard())
     except Exception as e:
         print(f"⚠ Ошибка: {e.__class__.__name__}: {e}")
+
+@router.message(Command('drop'))
+async def drop_database(message: Message):
+    await drop_db()
