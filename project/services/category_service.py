@@ -52,6 +52,19 @@ async def get_all(user_id: int, session: AsyncSession, skip: int = 0, limit: int
     """
     return await crud.get_all_categories(user_id, session, skip, limit)
 
+async def get_all_cat(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
+    """Получает список категорий с пагинацией.
+    
+    Args:
+        session: Асинхронная сессия БД
+        skip: Количество пропускаемых записей
+        limit: Максимальное количество возвращаемых записей
+        
+    Returns:
+        Список категорий (может быть пустым)
+    """
+    return await crud.get_all(session, skip, limit)
+
 async def update(session: AsyncSession, category_id: int, data: CategoryUpdate) -> Category | None:
     """Обновляет данные категории.
     

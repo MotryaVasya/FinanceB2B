@@ -333,7 +333,49 @@ async def get_all_transactions(user_id: int, session: AsyncSession, skip: int = 
             "time": datetime.now().isoformat(),
         }))
         return []
+
+async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
+    """
+    Получает список транзакций с диапозоном.
+
+    Пример использования:
+        # Получить первые 10 транзакций
+        transactions = await get_all_transactions(session, skip=0, limit=10)
         
+        # Получить следующую порцию (транзакции 11-20)
+        next_transact = await get_all_transactions(session, skip=10, limit=10)
+
+    Args:
+        session (AsyncSession): Асинхронная сессия для работы с БД.
+        skip (int): Количество пропускаемых записей (по умолчанию 0).
+            Например, skip=10 пропустит первые 10 записей.
+        limit (int): Максимальное количество возвращаемых записей (по умолчанию 100).
+            Например, limit=20 вернет не более 20 транзакций.
+
+    Returns:
+        list[Transaction]: Список транзакций. Возвращает пустой список, если:
+            - транзакции отсутствуют
+            - указана комбинация skip/limit за пределами общего количества
+            - произошла ошибка при запросе
+    """
+    try:
+        result = await session.execute(
+            select(Transaction, Category.name_category.label("name_category"))
+            .join(Category, Transaction.category_id == Category.id)
+            .offset(skip)
+            .limit(limit)
+        )
+        transactions = result.all()
+        return [transaction.to_pydantic(category_name=name_category) for transaction, name_category in transactions] or []
+    except (SQLAlchemyError) as e:
+        logging.error(json.dumps({
+            "message": "Ошибка получения списка транзакций",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+        return []
+
+
 async def update_transaction(user_id: int, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
     """
     Обновляет транзакцию в базе данных по указанному ID.

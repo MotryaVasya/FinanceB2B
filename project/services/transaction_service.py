@@ -54,6 +54,19 @@ async def get_all(user_id: int, session: AsyncSession, skip: int = 0, limit: int
     """
     return await crud.get_all_transactions(user_id, session, skip, limit)
 
+async def get_all_transactions(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Transaction]:
+    """Получает список транзакций с пагинацией.
+    
+    Args:
+        session: Асинхронная сессия БД
+        skip: Количество пропускаемых записей
+        limit: Максимальное количество возвращаемых записей
+        
+    Returns:
+        Список транзакций (может быть пустым)
+    """
+    return await crud.get_all(session, skip, limit)
+
 async def update(user_id: int, session: AsyncSession, transaction_id: int, data: TransactionUpdate) -> Transaction | None:
     """Обновляет данные транзакции.
     

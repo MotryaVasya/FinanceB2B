@@ -157,6 +157,45 @@ async def get_all_categories(user_id: int, session: AsyncSession, skip: int = 0,
         }))
         return []
         
+
+async def get_all(session: AsyncSession, skip: int = 0, limit: int = 100) -> list[Category]:
+    """
+    Получает список категорий с диапозоном.
+
+    Пример использования:
+        # Получить первые 10 категорий
+        categories = await get_all(session, skip=0, limit=10)
+        
+        # Получить следующую порцию (категорий 11-20)
+        next_categ = await get_all(session, skip=10, limit=10)
+
+    Args:
+        session (AsyncSession): Асинхронная сессия для работы с БД.
+        skip (int): Количество пропускаемых записей (по умолчанию 0).
+            Например, skip=10 пропустит первые 10 записей.
+        limit (int): Максимальное количество возвращаемых записей (по умолчанию 100).
+            Например, limit=20 вернет не более 20 транзакций.
+
+    Returns:
+        list[Category]: Список категорий. Возвращает пустой список, если:
+            - категории отсутствуют
+            - указана комбинация skip/limit за пределами общего количества
+            - произошла ошибка при запросе
+    """
+    try:
+        result = await session.execute(select(Category)
+                                       .offset(skip)
+                                       .limit(limit))
+        categories = result.scalars().all()
+        return [category.to_pydantic() for category in categories] or []
+    except (SQLAlchemyError) as e:
+        logging.error(json.dumps({
+            "message": "Ошибка получения списка категорий",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+        return []
+    
 async def update_category(session: AsyncSession, category_id: int, data: CategoryUpdate) -> Category | None:
     """
     Обновляет данные категории.

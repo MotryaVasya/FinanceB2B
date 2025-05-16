@@ -56,6 +56,31 @@ async def get_transactions(user_id: int, skip: int = 0, limit: int = 100, db: As
             "time": datetime.now().isoformat(),
         }))
 
+@router.get('/all', response_model=list[TransactionOut])
+async def get_all_transactions(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+    """
+    Получает список всех транзакций с поддержкой пагинации.
+
+    Args:
+        skip (int): Количество пропущенных транзакций (по умолчанию 0).
+        limit (int): Количество транзакций для возврата (по умолчанию 100).
+        db (AsyncSession): Асинхронная сессия базы данных.
+
+    Returns:
+        list[TransactionOut]: Список транзакций.
+    """
+    try:
+        return await transaction_service.get_all_transactions(db, skip, limit)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(json.dumps({
+            "message": "Ошибка при получении транзакций на стороне API",
+            "error": str(e),
+            "time": datetime.now().isoformat(),
+        }))
+
+
 @router.get("/get_statistics", response_model=TransactionStatistics)
 async def get_top_categories_by_user(from_date: datetime, to_date: datetime, user_id: int, db: AsyncSession = Depends(get_db)):
     """
